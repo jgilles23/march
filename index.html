@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<!--HTML and basic JavaScript copied from https://developer.mozilla.org/en-US/docs/Games/Tutorials/2D_Breakout_game_pure_JavaScript/Create_the_Canvas_and_draw_on_it-->
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>Bracket Creator</title>
+    <!-- <link rel="icon" type="image/x-icon" href="./icons/favicon.ico"> -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <style>
+        * {
+            --selectorWidth: 20vw;
+            /* font-family: 'Courier New', monospace; */
+            font-family: 'Arial';
+            padding: 0;
+            margin: 0;
+            text-align: center;
+            -webkit-user-select: none;
+            /* Safari */
+            -moz-user-select: none;
+            /* Firefox */
+            -ms-user-select: none;
+            /* IE10+/Edge */
+            user-select: none;
+            /* Standard */
+            touch-action: pan-y;
+        }
+
+        .headline {
+            text-align: center;
+            font-size: 5vmin;
+        }
+
+        .bracket {
+            display: flex;
+            align-items: center;
+        }
+
+        .column {
+            display: block;
+            margin-left: 2vw;
+        }
+
+        .selector {
+            display: block;
+            width: var(--selectorWidth);
+            margin: 2vw 0vw;
+            border: 1px solid black;
+            text-align: left;
+            padding: 1vw;
+            padding-left: 2vw;
+            font-size: 3vw;
+        }
+        
+        .radio-button {
+            height: 2vw;
+            width: 2vw;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+    </style>
+</head>
+
+<body>
+    <div class="main">
+        <div class="headline">March Madness Bracket Creator</div>
+        <br>
+        <label style="text-align: center">Bracket Name</label>
+        <input type="text" , id="bracket-name">
+        <br><br>
+        <div class="bracket">
+            <div class="column">
+                <div class="selector">
+                    <input type="radio" id="select-A" name="radio select" class="radio-button">
+                    <label id="name-A">Gonzaga</label>
+                    <br>
+                    <input type="radio" id="select-B" name="radio select" class="radio-button">
+                    <label id="name-B">UCLA</label>
+                </div>
+                <div class="selector">
+                    <input type="radio" id="select-A" name="radio select" class="radio-button">
+                    <label id="name-A">Gonzaga</label>
+                    <br>
+                    <input type="radio" id="select-B" name="radio select" class="radio-button">
+                    <label id="name-B">UCLA</label>
+                </div>
+                <div class="selector">
+                    <input type="radio" id="select-A" name="radio select" class="radio-button">
+                    <label id="name-A">Gonzaga</label>
+                    <br>
+                    <input type="radio" id="select-B" name="radio select" class="radio-button">
+                    <label id="name-B">UCLA</label>
+                </div>
+                <div class="selector">
+                    <input type="radio" id="select-A" name="radio select" class="radio-button">
+                    <label id="name-A">Gonzaga</label>
+                    <br>
+                    <input type="radio" id="select-B" name="radio select" class="radio-button">
+                    <label id="name-B">UCLA</label>
+                </div>
+            </div>
+            <div class="column">
+                <div class="selector">
+                    <input type="radio" id="select-A" name="radio select" class="radio-button">
+                    <label id="name-A">Gonzaga</label>
+                    <br>
+                    <input type="radio" id="select-B" name="radio select" class="radio-button">
+                    <label id="name-B">UCLA</label>
+                </div>
+            </div>
+        </div>
+
+        <br>
+        <div style="text-align: center; font-size: 2vmin">v0.0.1</div>
+    </div>
+
+</body>
+
+</html>

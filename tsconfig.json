@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "target": "es2017",
+    "module": "esnext",
+    "outDir": "out",
+    "sourceMap": true,
+    "moduleResolution": "node",
+  }
+}
