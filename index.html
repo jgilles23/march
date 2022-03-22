@@ -9,7 +9,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
         * {
-            --selectorWidth: 20vw;
+            --selectorWidth: 10vw;
             /* font-family: 'Courier New', monospace; */
             font-family: 'Arial';
             padding: 0;
@@ -33,28 +33,29 @@
 
         .bracket {
             display: flex;
-            align-items: center;
         }
 
         .column {
-            display: block;
-            margin-left: 2vw;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            margin-left: calc(1/10*var(--selectorWidth));
         }
 
         .selector {
             display: block;
             width: var(--selectorWidth);
-            margin: 2vw 0vw;
+            margin: calc(1/20*var(--selectorWidth)) 0vw;
             border: 1px solid black;
             text-align: left;
-            padding: 1vw;
-            padding-left: 2vw;
-            font-size: 3vw;
+            padding: calc(1/20*var(--selectorWidth));
+            padding-left: calc(2/20*var(--selectorWidth));
+            font-size: calc(3/20*var(--selectorWidth));
         }
 
         .radio-button {
-            height: 2vw;
-            width: 2vw;
+            height: calc(1/10*var(--selectorWidth));
+            width: calc(1/10*var(--selectorWidth));
         }
 
         .hidden {
@@ -70,65 +71,22 @@
         <label style="text-align: center">Bracket Name</label>
         <input type="text" , id="bracket-name">
         <br><br>
-        <div class="bracket">
-            <div class="column">
-                <div class="selector">
-                    <label id="name-A">
-                        <input type="radio" id="select-A" name="radio select" class="radio-button">
-                        Gonzaga
-                    </label>
-                    <br>
-                    <label id="name-B">
-                        <input type="radio" id="select-B" name="radio select" class="radio-button">
-                        UCLA
-                    </label>
-                </div>
-                <div class="selector">
-                    <label id="name-A">
-                        <input type="radio" id="select-A" name="radio select" class="radio-button">
-                        Gonzaga
-                    </label>
-                    <br>
-                    <label id="name-B">
-                        <input type="radio" id="select-B" name="radio select" class="radio-button">
-                        UCLA
-                    </label>
-                </div>
-                <div class="selector">
-                    <label id="name-A">
-                        <input type="radio" id="select-A" name="radio select" class="radio-button">
-                        Gonzaga
-                    </label>
-                    <br>
-                    <label id="name-B">
-                        <input type="radio" id="select-B" name="radio select" class="radio-button">
-                        UCLA
-                    </label>
-                </div>
-                <div class="selector">
-                    <label id="name-A">
-                        <input type="radio" id="select-A" name="radio select" class="radio-button">
-                        Gonzaga
-                    </label>
-                    <br>
-                    <label id="name-B">
-                        <input type="radio" id="select-B" name="radio select" class="radio-button">
-                        UCLA
-                    </label>
-                </div>
+        <div class="bracket" id="bracket-input">
+            <!-- Where to create a bracket object -->
+        </div>
+
+        <!-- Everything below here is templates-->
+        <div id="templates" class="hidden">
+            <!-- Column template-->
+            <div class="column" id="column-template">
             </div>
-            <div class="column">
-                <div class="selector">
-                    <label id="name-A">
-                        <input type="radio" id="select-A" name="radio select" class="radio-button">
-                        Gonzaga
-                    </label>
-                    <br>
-                    <label id="name-B">
-                        <input type="radio" id="select-B" name="radio select" class="radio-button">
-                        UCLA
-                    </label>
-                </div>
+            <!-- Radio select template-->
+            <div class="selector" id="selector-template">
+                <input type="radio" id="select-A" name="radio-select-template" class="radio-button">
+                <label id="name-A" for="select-A">Team-A</label>
+                <br>
+                <input type="radio" id="select-B" name="radio-select-template" class="radio-button">
+                <label id="name-B" for="select-B">Team-B</label>
             </div>
         </div>
 

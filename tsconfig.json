@@ -6,5 +6,6 @@
     "module": "umd",
     "moduleResolution": "node",
     "allowJs": true,
+    "watch": true,
   }
 }
