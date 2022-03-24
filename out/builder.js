@@ -489,10 +489,184 @@ class Instance {
         }
         this.score[user_name] = s;
     }
+    rank_users() {
+        //Returns the users in order from 1st to last place
+        //Sorts users from best to worse (reverse sort)
+        let users_sorted = Object.keys(this.score).sort((b, a) => { return this.score[a] - this.score[b]; });
+        return users_sorted;
+    }
+}
+class Table {
+    constructor(user_names, format = {}) {
+        //Create an empty square table of format place x user_name
+        this.current_format = format;
+        this.N = Object.keys(user_names).length; //number of users
+        this.users = user_names;
+        //Setup the rank count data structure
+        this.raw_number = this.fill_square(0);
+        //Format as raw (the current data type)
+        this.format();
+    }
+    fill_square(value) {
+        //Return a filled square of the format requested
+        let square = Array();
+        for (let i = 0; i < this.N; i++) {
+            let by_user = {};
+            for (let user of this.users) {
+                by_user[user] = value;
+            }
+            square.push(by_user);
+        }
+        return square;
+    }
+    copy_square(square) {
+        let new_square = Array();
+        for (let i = 0; i < this.N; i++) {
+            let by_user = {};
+            for (let user of this.users) {
+                by_user[user] = square[i][user];
+            }
+            new_square.push(by_user);
+        }
+        return new_square;
+    }
+    load_rank_count(instances) {
+        //Count ranks by array of instances
+        for (let inst of instances) {
+            let users_ranked = inst.rank_users();
+            for (let i = 0; i < this.N; i++) {
+                this.raw_number[i][users_ranked[i]] += 1;
+            }
+        }
+        //Format as current data type after changing data
+        this.format();
+    }
+    normalize(arr) {
+        //normalize the given array of numbers and return
+        let sum = 0;
+        for (let n of arr) {
+            sum += n;
+        }
+        let new_arr = Array();
+        for (let n of arr) {
+            new_arr.push(n / sum);
+        }
+        return new_arr;
+    }
+    format(data_type = undefined) {
+        //Format the data as requested
+        //Save new data format
+        if (data_type === undefined) {
+            this.current_format = {};
+        }
+        else {
+            this.current_format = data_type;
+        }
+        //Format the data to the required type
+        if (this.current_format.fraction_by === undefined) {
+            //Format as raw
+            this.formatted_number = this.copy_square(this.raw_number);
+        }
+        else {
+            //Format as fraction
+            //Clear existing format
+            this.formatted_number = this.fill_square(0);
+            if (this.current_format.fraction_by === "user") {
+                //Calculate fractions by user
+                for (let user of this.users) {
+                    let arr = this._get_by_user("raw_number", user);
+                    arr = this.normalize(arr);
+                    this._set_by_user("formatted_number", user, arr);
+                }
+            }
+            else {
+                //Calculate fractions by place
+                for (let i = 0; i < this.N; i++) {
+                    let arr = this._get_by_place("raw_number", i);
+                    arr = this.normalize(arr);
+                    this._set_by_place("formatted_number", i, arr);
+                }
+            }
+        }
+        //Convert percent
+        if (this.current_format.as_percent === true) {
+            for (let i = 0; i < this.N; i++) {
+                for (let user of this.users) {
+                    this.formatted_number[i][user] = this.formatted_number[i][user] * 100;
+                }
+            }
+        }
+        //Round decimal
+        if (this.current_format.decimals !== undefined) {
+            for (let i = 0; i < this.N; i++) {
+                for (let user of this.users) {
+                    this.formatted_number[i][user] = +this.formatted_number[i][user].toFixed(this.current_format.decimals);
+                }
+            }
+        }
+        //Format string type
+        let suffex = "";
+        if (this.current_format.string_suffex !== undefined) {
+            suffex = this.current_format.string_suffex;
+        }
+        this.formatted_string = this.fill_square("");
+        for (let i = 0; i < this.N; i++) {
+            for (let user of this.users) {
+                this.formatted_string[i][user] = this.formatted_number[i][user].toString() + suffex;
+            }
+        }
+    }
+    _get_by_place(attribute, place) {
+        //Returns an array by place, in user order
+        let arr = Array();
+        for (let user of this.users) {
+            arr.push(this[attribute][place][user]);
+        }
+        return arr;
+    }
+    _set_by_place(attribute, place, arr) {
+        //Sets an array by place in user order
+        for (let i = 0; i < this.N; i++) {
+            this[attribute][place][this.users[i]] = arr[i];
+        }
+    }
+    _get_by_user(attribute, user) {
+        //Gets an array by user in place order
+        let arr = Array();
+        for (let i = 0; i < this.N; i++) {
+            arr.push(this[attribute][i][user]);
+        }
+        return arr;
+    }
+    _set_by_user(attribute, user, arr) {
+        //Sets and array by user in place order
+        for (let i = 0; i < this.N; i++) {
+            this[attribute][i][user] = arr[i];
+        }
+    }
+    get_by_place(place, as_string = false) {
+        //Return the data for a particular place, indexed from 0
+        if (as_string) {
+            return this.formatted_string[place];
+        }
+        else {
+            return this.formatted_number[place];
+        }
+    }
+    get_by_user(user, as_string = false) {
+        //Return the data for a particular user
+        if (as_string) {
+            return this._get_by_user("formatted_string", user);
+        }
+        else {
+            return this._get_by_user("formatted_number", user);
+        }
+    }
 }
 class Scenario {
     constructor(state, num_instances, user_brackets) {
         //Scenario creates and stores Instance(s) for performing metrics aganist
+        this.user_bracket = user_brackets;
         //Create the bracket object from the scenario provided
         this.bracket = new Bracket(state);
         this.bracket.create_ProbSelector();
@@ -507,6 +681,13 @@ class Scenario {
             }
             this.instance.push(inst);
         }
+    }
+    count_by_rank() {
+        //For each user, count the number of times they are in each position
+        let rank_count = {};
+        let table = new Table(Object.keys(this.user_bracket));
+        table.load_rank_count(this.instance);
+        return table;
     }
 }
 class UserBracketManager {
@@ -659,6 +840,22 @@ class UserBracketManager {
         this.set_message("Loaded user bracket.");
     }
 }
+class MyChart {
+    constructor(div_id) {
+        //Class for standard chart setup functions, etc
+        this.div_DOM = document.getElementById(div_id);
+        this.config = {};
+        this.data = {};
+    }
+}
+class StackedChart {
+    constructor(div_id, scenario) {
+        //Create a stacket chart showing each player and their likely finish rank
+        let table = scenario.count_by_rank();
+        table.format({ fraction_by: "place", as_percent: true, decimals: 2, string_suffex: "%" });
+        //Prepare the chart
+    }
+}
 //---------------------------------------------------------------
 async function main() {
     //Load the primary csv File and convert to states
@@ -669,8 +866,61 @@ async function main() {
     let manager = new UserBracketManager(states[0]);
     await manager.load();
     //Tests with Scenario
-    let scenario = new Scenario(states[states.length - 1], 2, manager.user_brackets);
+    let scenario = new Scenario(states[states.length - 1], 10000, manager.user_brackets);
     console.log(scenario);
+    let table = scenario.count_by_rank();
+    table.format({ fraction_by: "place", as_percent: true, decimals: 2, string_suffex: "%" });
+    console.log(table);
+    // Playing with graphing!
+    graphtest(table);
 }
 main();
+function graphtest(table) {
+    const ctx = document.getElementById('myChart');
+    //Create the base data structure
+    const data = {
+        labels: ["1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th"],
+        datasets: []
+    };
+    //Create the data
+    const background_colors = ["#DFFF00", "#FFBF00", "#FF7F50", "#DE3163", "#9FE2BF", "#40E0D0", "#6495ED", "#CCCCFF",];
+    for (let i = 0; i < table.N; i++) {
+        let user = table.users[i];
+        let ds = {
+            label: user,
+            data: table.get_by_user(user, false),
+            backgroundColor: background_colors[i]
+        };
+        data.datasets.push(ds);
+    }
+    //Create the config file
+    const config = {
+        type: 'bar',
+        data: data,
+        options: {
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Current Probability of Each Player Getting Each Place'
+                },
+                legend: {
+                    position: "right",
+                    reverse: true,
+                },
+            },
+            responsive: true,
+            scales: {
+                x: {
+                    stacked: true,
+                },
+                y: {
+                    stacked: true,
+                    max: 100,
+                },
+            }
+        }
+    };
+    //Actually graph
+    const myChart = new Chart(ctx, config);
+}
 //# sourceMappingURL=builder.js.map

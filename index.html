@@ -58,6 +58,12 @@
             width: calc(1/10*var(--selectorWidth));
         }
 
+        .test-chart {
+            height: 50vmin;
+            width: 90vmin;
+            margin:auto;
+        }
+
         .hidden {
             display: none;
         }
@@ -66,7 +72,11 @@
 
 <body>
     <div class="main">
-        <div class="headline">March Madness Bracket Creator</div>
+        <div class="headline">March Madness Bracket Analysis</div>
+        <br>
+        <div class="test-chart">
+            <canvas id="myChart"></canvas>
+        </div>
         <br>
         <div id="bracket-input-window">
             <div id="bracket-controls">
@@ -112,8 +122,10 @@
         </div>
 
         <br>
-        <div style="text-align: center; font-size: 2vmin">v0.0.1</div>
+        <div style="text-align: center; font-size: 2vmin">v0.2.0</div>
 
+        <!-- Scripts -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.1/chart.js"></script>
         <script src="./out/builder.js"></script>
     </div>
 
