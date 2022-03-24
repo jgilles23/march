@@ -15,15 +15,15 @@
             padding: 0;
             margin: 0;
             text-align: center;
-            -webkit-user-select: none;
+            /* -webkit-user-select: none; */
             /* Safari */
-            -moz-user-select: none;
+            /* -moz-user-select: none; */
             /* Firefox */
-            -ms-user-select: none;
+            /* -ms-user-select: none; */
             /* IE10+/Edge */
-            user-select: none;
+            /* user-select: none; */
             /* Standard */
-            touch-action: pan-y;
+            /* touch-action: pan-y; */
         }
 
         .headline {
@@ -68,15 +68,36 @@
     <div class="main">
         <div class="headline">March Madness Bracket Creator</div>
         <br>
-        <label style="text-align: center">Bracket Name</label>
-        <input type="text" , id="bracket-name">
-        <br><br>
-        <div class="bracket" id="bracket-input">
-            <!-- Where to create a bracket object -->
+        <div id="bracket-input-window">
+            <div id="bracket-controls">
+                <label for="bracket-select">Show</label>
+                <select name="bracket-select" id="bracket-select">
+                    <option value="new-bracket">New Bracket</option>
+                    <option value="random-bracket">Random Bracket</option>
+                </select>
+                &emsp;
+                <label style="text-align: center" for="bracket-name">Bracket Name</label>
+                <input type="text" id="bracket-name" value="default">
+                &emsp;
+                <button id="refresh-button">Refresh</button>
+                <button id="delete-button">Delete</button>
+                <button id="save-button">Save</button>
+                <button id="download-brackets">Download File</button>
+                <button id="upload-brackets">Upload File</button>
+                <br><br>
+                <div id="message-area">Message</div>
+            </div>
+            <br><br>
+            <div class="bracket" id="bracket-input">
+                <!-- Where to create a bracket object -->
+            </div>
+            <div class="bracket" id="bracekt2"></div>
         </div>
 
         <!-- Everything below here is templates-->
         <div id="templates" class="hidden">
+            <!-- Bracket slector option template-->
+            <option id="bracket-select-option-template">New Bracket</option>
             <!-- Column template-->
             <div class="column" id="column-template">
             </div>
