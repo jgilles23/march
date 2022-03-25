@@ -902,8 +902,9 @@ class MyChart {
   }
 }
 
-class StackedChart {
+class StackedChart extends MyChart{
   constructor(div_id: string, scenario: Scenario) {
+    super(div_id)
     //Create a stacket chart showing each player and their likely finish rank
     let table: Table = scenario.count_by_rank()
     table.format({ fraction_by: "place", as_percent: true, decimals: 2, string_suffex: "%" })
