@@ -888,21 +888,53 @@ class UserBracketManager {
     this.set_message("Loaded user bracket.")
   }
 }
+interface ChartDataSet {
+  data: Array<any> //Cannot immediatly define the data type
+  label?: string
+  backgroundColor?: string
+}
 
 class MyChart {
   div_DOM: HTMLDivElement
   chart: any
   config: any
   data: any
-  constructor(div_id: string) {
+  dataset: Array<ChartDataSet>
+  constructor(div_id: string, type: string) {
     //Class for standard chart setup functions, etc
     this.div_DOM = document.getElementById(div_id) as HTMLDivElement
-    this.config = {}
-    this.data = {}
+    this.config = {
+      type: type
+      //data: To be added just before graphing
+      //plugins: To be added just before gaphing
+    }
+    this.data = {
+      //labels: Added with special function call
+      dataset: []
+    }
+  }
+  add_group_labels(labels: Array<string>) {
+    this.data.label = labels
+  }
+  generate_labels(num_players: number) {
+    //Function to generate labels in an array
+    let arr: Array<string> = ["1st", "2nd", "3rd"]
+    for (let i = 3; i < num_players; i++) {
+      arr.push((i + 1).toString() + "th")
+    }
+    return arr.slice(0, num_players)
+  }
+  get_color(player_num: number) {
+    let colors = ["#DFFF00", "#FFBF00", "#FF7F50", "#DE3163", "#9FE2BF", "#40E0D0", "#6495ED", "#CCCCFF",]
+    if (player_num < 8) {
+      return colors[player_num]
+    } else {
+      return "#000000" //blck
+    }
   }
 }
 
-class StackedChart extends MyChart{
+class StackedChart extends MyChart {
   constructor(div_id: string, scenario: Scenario) {
     super(div_id)
     //Create a stacket chart showing each player and their likely finish rank
@@ -937,7 +969,7 @@ async function main() {
 main()
 
 function graphtest(table: Table) {
-  const ctx = document.getElementById('myChart');
+  const ctx = document.getElementById('stacked-chart');
   //Create the base data structure
   const data = {
     labels: ["1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th"],
@@ -960,10 +992,10 @@ function graphtest(table: Table) {
     data: data,
     options: {
       plugins: {
-        title: {
-          display: true,
-          text: 'Current Probability of Each Player Getting Each Place'
-        },
+        // title: {
+        //   display: true,
+        //   text: 'Current Probability of Each Player Getting Each Place'
+        // },
         legend: {
           position: "right",
           reverse: true,

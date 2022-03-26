@@ -58,10 +58,10 @@
             width: calc(1/10*var(--selectorWidth));
         }
 
-        .test-chart {
+        .stacked-chart {
             height: 50vmin;
             width: 90vmin;
-            margin:auto;
+            margin: auto;
         }
 
         .hidden {
@@ -74,8 +74,18 @@
     <div class="main">
         <div class="headline">March Madness Bracket Analysis</div>
         <br>
-        <div class="test-chart">
-            <canvas id="myChart"></canvas>
+        <dvi></dvi>
+        <div>
+            <div>
+                Current Probability of
+                <select name="bracket-select-stack" id="bracket-select-stack">
+                    <option value="each-player">Each Player</option>
+                </select>
+                 Getting Each Place
+                </div>
+            <div class="stacked-chart">
+                <canvas id="stacked-chart"></canvas>
+            </div>
         </div>
         <br>
         <div id="bracket-input-window">

@@ -841,15 +841,43 @@ class UserBracketManager {
     }
 }
 class MyChart {
-    constructor(div_id) {
+    constructor(div_id, type) {
         //Class for standard chart setup functions, etc
         this.div_DOM = document.getElementById(div_id);
-        this.config = {};
-        this.data = {};
+        this.config = {
+            type: type
+            //data: To be added just before graphing
+            //plugins: To be added just before gaphing
+        };
+        this.data = {
+            //labels: Added with special function call
+            dataset: []
+        };
+    }
+    add_group_labels(labels) {
+        this.data.label = labels;
+    }
+    generate_labels(num_players) {
+        //Function to generate labels in an array
+        let arr = ["1st", "2nd", "3rd"];
+        for (let i = 3; i < num_players; i++) {
+            arr.push((i + 1).toString() + "th");
+        }
+        return arr.slice(0, num_players);
+    }
+    get_color(player_num) {
+        let colors = ["#DFFF00", "#FFBF00", "#FF7F50", "#DE3163", "#9FE2BF", "#40E0D0", "#6495ED", "#CCCCFF",];
+        if (player_num < 8) {
+            return colors[player_num];
+        }
+        else {
+            return "#000000"; //blck
+        }
     }
 }
-class StackedChart {
+class StackedChart extends MyChart {
     constructor(div_id, scenario) {
+        super(div_id);
         //Create a stacket chart showing each player and their likely finish rank
         let table = scenario.count_by_rank();
         table.format({ fraction_by: "place", as_percent: true, decimals: 2, string_suffex: "%" });
@@ -876,7 +904,7 @@ async function main() {
 }
 main();
 function graphtest(table) {
-    const ctx = document.getElementById('myChart');
+    const ctx = document.getElementById('stacked-chart');
     //Create the base data structure
     const data = {
         labels: ["1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th"],
@@ -899,10 +927,10 @@ function graphtest(table) {
         data: data,
         options: {
             plugins: {
-                title: {
-                    display: true,
-                    text: 'Current Probability of Each Player Getting Each Place'
-                },
+                // title: {
+                //   display: true,
+                //   text: 'Current Probability of Each Player Getting Each Place'
+                // },
                 legend: {
                     position: "right",
                     reverse: true,
