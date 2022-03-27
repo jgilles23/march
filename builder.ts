@@ -934,22 +934,23 @@ class MyChart {
   }
 }
 
-class StackedChart extends MyChart {
-  constructor(div_id: string, scenario: Scenario) {
-    super(div_id)
-    //Create a stacket chart showing each player and their likely finish rank
-    let table: Table = scenario.count_by_rank()
-    table.format({ fraction_by: "place", as_percent: true, decimals: 2, string_suffex: "%" })
-    //Prepare the chart
-  }
-}
+// class StackedChart extends MyChart {
+//   constructor(div_id: string, scenario: Scenario) {
+//     super(div_id)
+//     //Create a stacket chart showing each player and their likely finish rank
+//     let table: Table = scenario.count_by_rank()
+//     table.format({ fraction_by: "place", as_percent: true, decimals: 2, string_suffex: "%" })
+//     //Prepare the chart
+//   }
+// }
 
 //---------------------------------------------------------------
 
 
 async function main() {
   //Load the primary csv File and convert to states
-  let text: string = await load_file_text(".//fivethirtyeight_ncaa_forecasts.csv")
+  let text: string = await load_file_text("https://projects.fivethirtyeight.com/march-madness-api/2022/fivethirtyeight_ncaa_forecasts.csv")//.//fivethirtyeight_ncaa_forecasts.csv")
+  
   let csv = csvToArray(text)
   let states: Array<State> = breakdown_dates(csv)
   //Load the bracket creator
