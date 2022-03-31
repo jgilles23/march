@@ -742,12 +742,12 @@ class UserBracketManager {
   user_brackets: Record<string, SparseBracket>
   message_area: HTMLDivElement
   bracket: Bracket
-  bracket_select_DOM: HTMLSelectElement
-  bracket_option_template: HTMLOptionElement
+  bracket_selector: Selector
   bracket_name_DOM: any
   constructor(earliest_state: State) {
     //Class for managing and creating user files
     this.message_area = document.getElementById("message-area") as HTMLDivElement
+    this.bracket_name_DOM = document.getElementById("bracket-name") as HTMLInputElement
     this.set_message("Loading...")
     //Load the earliest bracket as a basis for selecting brackets
     this.bracket = new Bracket(earliest_state)
@@ -762,57 +762,34 @@ class UserBracketManager {
     //Load the user bracekts from file
     this.user_brackets = await load_file_json("user_brackets.json")
     //Save field areas
-    this.bracket_select_DOM = document.getElementById("bracket-select") as HTMLSelectElement
-    this.bracket_select_DOM.onchange = x => this.bracket_select()
-    this.bracket_name_DOM = document.getElementById("bracket-name")
-    //Save select option area
-    this.bracket_option_template = document.getElementById("bracket-select-option-template") as HTMLOptionElement
+    this.bracket_selector = new Selector(
+      "bracket-select", 
+      ["New Bracket", "Random Bracket"], 
+      Object.keys(this.user_brackets), 
+      (value:string) => this.bracket_select(value))
     //Apply functions to the buttons
-    document.getElementById("refresh-button").onclick = x => this.refresh()
+    document.getElementById("refresh-button").onclick = x => this.bracket_selector.select()
     document.getElementById("delete-button").onclick = x => this.delete()
     document.getElementById("save-button").onclick = x => this.save()
     document.getElementById("download-brackets").onclick = x => this.download()
     document.getElementById("upload-brackets").onclick = x => this.upload()
-    //Update the selector
-    this.update_bracket_select()
-    //Select the first option
-    this.bracket_select()
   }
-  update_bracket_select() {
-    //Update the bracket selector, clear the old, add new
-    //Clear existing options
-    while (this.bracket_select_DOM.options.length > 2) {
-      this.bracket_select_DOM.remove(2)
-    }
-    //Add new options
-    for (let user in this.user_brackets) {
-      let new_option = this.bracket_option_template.cloneNode(true) as HTMLOptionElement
-      new_option.textContent = user
-      new_option.value = user
-      this.bracket_select_DOM.appendChild(new_option)
-    }
-  }
-  bracket_select() {
+  bracket_select(value: string) {
     //Use the "Show" field to select a bracket: new, random, or existing
-    let value: string = this.bracket_select_DOM.value
-    if (value === "new-bracket") {
+    if (value === "New Bracket") {
       this.new_bracket()
-    } else if (value === "random-bracket") {
+    } else if (value === "Random Bracket") {
       this.random_bracket()
     } else {
       this.load_bracket(value)
     }
-  }
-  refresh() {
-    //Re-load the current bracket being shown
-    this.bracket_select()
   }
   delete() {
     //Delete the "Bracket Name" from the user brackets
     let value: string = this.bracket_name_DOM.value
     if (value in this.user_brackets) {
       delete this.user_brackets[value]
-      this.update_bracket_select()
+      this.bracket_selector.set_more_options(Object.keys(this.user_brackets))
       this.set_message("Bracket deleted.")
     } else {
       this.set_message("Error Deleting: Bracket name does not exist. Characters must match exactly.")
@@ -840,8 +817,7 @@ class UserBracketManager {
       if (valid) {
         //Sparse bracket appears to be valid, save it to the user_brackets
         this.user_brackets[user] = sb
-        this.update_bracket_select()
-        this.bracket_select()
+        this.bracket_selector.set_more_options(Object.keys(this.user_brackets))
         this.set_message("Save complete. Don't forget to download.")
       } else {
         this.set_message("Error Saving: Not all selections have been made.")
@@ -865,13 +841,13 @@ class UserBracketManager {
   set_bracket_name(user_name: string) {
     this.bracket_name_DOM.value = user_name
   }
-  new_bracket() {
+  new_bracket(): void {
     //Load a scratch bracket for in-filling
     this.bracket.clear_winners(true)
     this.set_bracket_name("new")
     this.set_message("Input a bracket name and set winners, then click save.")
   }
-  random_bracket() {
+  random_bracket(): void {
     //Create a random bracket using the weights of each team winning a game
     this.bracket.clear_winners(true)
     let sb: SparseBracket = this.bracket.generate_random_sparse()
@@ -879,7 +855,7 @@ class UserBracketManager {
     this.set_bracket_name("random")
     this.set_message("Random bracket created based on weights of each team.")
   }
-  load_bracket(user_name: string) {
+  load_bracket(user_name: string): void {
     //Load a bracket by name
     let sb: SparseBracket = this.user_brackets[user_name]
     this.bracket.clear_winners(true)
@@ -888,6 +864,55 @@ class UserBracketManager {
     this.set_message("Loaded user bracket.")
   }
 }
+
+class Selector {
+  selector_DOM: HTMLSelectElement
+  base_options_DOM: Array<HTMLOptionElement>
+  more_options_DOM: Array<HTMLOptionElement>
+  on_change_function: (value: string) => void
+  constructor(selector_id: string, base_options: Array<string>, more_options:Array<string>, on_change: (value: string) => void) {
+    //Class for easily reading from and updating the selector buttons
+    this.selector_DOM = document.getElementById(selector_id) as HTMLSelectElement
+    this.on_change_function = on_change
+    this.selector_DOM.onchange = x => this.select()
+    this.base_options_DOM = []
+    this.more_options_DOM = []
+    //Add the base options to the selector
+    let option_template = document.getElementById("generic-select-option-template") as HTMLOptionElement
+    for (let option of base_options) {
+      let new_option: HTMLOptionElement = option_template.cloneNode(true) as HTMLOptionElement
+      new_option.textContent = option
+      new_option.value = option
+      this.base_options_DOM.push(new_option)
+      this.selector_DOM.appendChild(new_option)
+    }
+    //Add the additional options
+    this.set_more_options(more_options)
+  }
+  set_more_options(more_options: Array<string>): void {
+    //Delete existing "more options", set new more_options
+    //Delete old
+    for (let option_DOM of this.more_options_DOM) {
+      option_DOM.remove()
+    }
+    //Add new
+    let option_template = document.getElementById("generic-select-option-template") as HTMLOptionElement
+    for (let option of more_options) {
+      let new_option: HTMLOptionElement = option_template.cloneNode(true) as HTMLOptionElement
+      new_option.textContent = option
+      new_option.value = option
+      this.more_options_DOM.push(new_option)
+      this.selector_DOM.appendChild(new_option)
+    }
+    //Run as-if was just selected
+    this.select()
+  }
+  select() {
+    //Function to run function of current selection
+    this.on_change_function(this.selector_DOM.value)
+  }
+}
+
 interface ChartDataSet {
   data: Array<any> //Cannot immediatly define the data type
   label?: string
@@ -895,26 +920,14 @@ interface ChartDataSet {
 }
 
 class MyChart {
-  div_DOM: HTMLDivElement
-  chart: any
+  div_DOM: HTMLDivElement //DIV in which the canvas object lives. Canvas should have id of canvas
+  chart: any //The actuall Chart element from chartjs
+  canvas_DOM: HTMLCanvasElement //DOM canvas element
   config: any
-  data: any
-  dataset: Array<ChartDataSet>
-  constructor(div_id: string, type: string) {
+  constructor(div_id: string) {
     //Class for standard chart setup functions, etc
     this.div_DOM = document.getElementById(div_id) as HTMLDivElement
-    this.config = {
-      type: type
-      //data: To be added just before graphing
-      //plugins: To be added just before gaphing
-    }
-    this.data = {
-      //labels: Added with special function call
-      dataset: []
-    }
-  }
-  add_group_labels(labels: Array<string>) {
-    this.data.label = labels
+    this.canvas_DOM = this.div_DOM.getElementsByTagName("canvas")[0] as HTMLCanvasElement
   }
   generate_labels(num_players: number) {
     //Function to generate labels in an array
@@ -929,28 +942,94 @@ class MyChart {
     if (player_num < 8) {
       return colors[player_num]
     } else {
-      return "#000000" //blck
+      return "#000000" //black
     }
   }
 }
 
-// class StackedChart extends MyChart {
-//   constructor(div_id: string, scenario: Scenario) {
-//     super(div_id)
-//     //Create a stacket chart showing each player and their likely finish rank
-//     let table: Table = scenario.count_by_rank()
-//     table.format({ fraction_by: "place", as_percent: true, decimals: 2, string_suffex: "%" })
-//     //Prepare the chart
-//   }
-// }
+class StackedChart extends MyChart {
+  table: Table //Table for holding the charted data
+  selector: Selector
+  constructor(div_id: string, scenario: Scenario) {
+    //Create a stacket chart showing each player and their likely finish rank
+    super(div_id)
+    //Prepare the data for graphing in the format requested
+    this.table = scenario.count_by_rank()
+    this.table.format({ fraction_by: "place", as_percent: true, decimals: 2, string_suffex: "%" })
+    //Prepare the chart
+    this.config = {
+      type: 'bar',
+      data: {
+        labels: this.generate_labels(this.table.N),
+        datasets: [],
+      },
+      options: {
+        plugins: {
+          legend: {position: "right", reverse: true},
+        },
+        responsive: true,
+        scales: {
+          x: {stacked: true},
+          y: {stacked: true, max: 100},
+        },
+      },
+    }
+    //Chart it!
+    this.chart = new Chart(this.canvas_DOM, this.config)
+    //Prepare the selector
+    this.selector = new Selector(
+      div_id + "-selector",
+      ["Each Player"],
+      this.table.users,
+      value => this.update_data_for_selection(value)
+    )
+  }
+  update_data_for_selection(value: string) {
+    //Function for updating the table based on the user's selection of data type
+    //Clear the existing data
+    this.config.data.datasets = []
+    //Write new daata based on selection
+    let users: Array<string>
+    if (value === "Each Player") {
+      //Show all the data
+      users = this.table.users
+    } else {
+      //Show only the data of the user selected
+      users = [value]
+    }
+    //Create the dataset
+    for (let user of users) {
+      let ds: ChartDataSet = {
+        label: user,
+        data: this.table.get_by_user(user, false),
+        backgroundColor: this.get_color(this.table.users.indexOf(user))
+      }
+      this.config.data.datasets.push(ds)
+    }
+    this.chart.update()
+  }
+}
+
+class UpcomingGameOutcome extends MyChart {
+  constructor(div_id: string) {
+    //Single column showing winner/loser values of the outcome of a given game
+    super(div_id)
+  }
+}
+
+class UpcomingGame {
+  constructor() {
+    //Double column showing change in outcome for an upcoming game
+  }
+}
 
 //---------------------------------------------------------------
 
 
 async function main() {
   //Load the primary csv File and convert to states
-  let text: string = await load_file_text("https://projects.fivethirtyeight.com/march-madness-api/2022/fivethirtyeight_ncaa_forecasts.csv")//.//fivethirtyeight_ncaa_forecasts.csv")
-  
+  // let text: string = await load_file_text(".//fivethirtyeight_ncaa_forecasts.csv") //Testing
+  let text: string = await load_file_text("https://projects.fivethirtyeight.com/march-madness-api/2022/fivethirtyeight_ncaa_forecasts.csv") //Production
   let csv = csvToArray(text)
   let states: Array<State> = breakdown_dates(csv)
   //Load the bracket creator
@@ -963,7 +1042,8 @@ async function main() {
   table.format({ fraction_by: "place", as_percent: true, decimals: 2, string_suffex: "%" })
   console.log(table)
   // Playing with graphing!
-  graphtest(table)
+  // graphtest(table)
+  new StackedChart("stacked-chart-div", scenario)
 
 }
 

@@ -74,26 +74,25 @@
     <div class="main">
         <div class="headline">March Madness Bracket Analysis</div>
         <br>
-        <dvi></dvi>
-        <div>
+        <!-- Stacked Chart-->
+        <div id="stacked-chart-div">
             <div>
                 Current Probability of
-                <select name="bracket-select-stack" id="bracket-select-stack">
-                    <option value="each-player">Each Player</option>
-                </select>
-                 Getting Each Place
-                </div>
+                <select name="stacked-chart-div-selector" id="stacked-chart-div-selector"></select>
+                Getting Each Place
+            </div>
             <div class="stacked-chart">
                 <canvas id="stacked-chart"></canvas>
             </div>
         </div>
         <br>
+        <!-- Bracket Input-->
         <div id="bracket-input-window">
             <div id="bracket-controls">
                 <label for="bracket-select">Show</label>
                 <select name="bracket-select" id="bracket-select">
-                    <option value="new-bracket">New Bracket</option>
-                    <option value="random-bracket">Random Bracket</option>
+                    <!-- <option value="new-bracket">New Bracket</option>
+                    <option value="random-bracket">Random Bracket</option> -->
                 </select>
                 &emsp;
                 <label style="text-align: center" for="bracket-name">Bracket Name</label>
@@ -116,6 +115,8 @@
 
         <!-- Everything below here is templates-->
         <div id="templates" class="hidden">
+            <!-- Generic select template-->
+            <option id="generic-select-option-template"></option>
             <!-- Bracket slector option template-->
             <option id="bracket-select-option-template">New Bracket</option>
             <!-- Column template-->
