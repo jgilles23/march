@@ -98,13 +98,15 @@ function breakdown_dates(csv: Array<Row>) {
     }
   }
   let states_arr: Array<State> = []
+  let dates_arr: Array<string> = []
   for (let date of dates) {
     //Check through the states array, throw out any states that are empty
     if (Object.keys(states[date].team_id).length > 0) {
       states_arr.push(states[date])
+      dates_arr.push(date)
     }
   }
-  return states_arr
+  return [states_arr, dates_arr]
 }
 
 class Game {
@@ -502,12 +504,21 @@ async function load_file_text(filepath: string) {
 
 class Instance {
   sparse_bracket: SparseBracket
-  score: Record<string, number>
-  constructor(sparse_bracket: SparseBracket) {
+  score: Record<string, number> //Users with their scores per instance
+  constructor(sparse_bracket: SparseBracket, user_brackets_dict: Record<string, SparseBracket>) {
     //class for storing an instance of a Bracket in SparseBracket format
     //With associated scores of user's sparse_brackets
     this.sparse_bracket = sparse_bracket
     this.score = {}
+    if (user_brackets_dict !== undefined) {
+      this.score_users(user_brackets_dict)
+    }
+  }
+  score_users(user_brackets_dict: Record<string, SparseBracket>): void {
+    //Score all the users provided
+    for (let user in user_brackets_dict) {
+      this.score_user(user, user_brackets_dict[user])
+    }
   }
   score_user(user_name: string, user_bracket: SparseBracket) {
     //Function for scoring a user provided bracket aganist this instance of the main sparse_bracket
@@ -707,27 +718,13 @@ class Table {
   }
 }
 
-class Scenario {
-  bracket: Bracket
+class BaseScenario {
   instance: Array<Instance>
   user_bracket: Record<string, SparseBracket>
-  constructor(state: State, num_instances: number, user_brackets: Record<string, SparseBracket>) {
-    //Scenario creates and stores Instance(s) for performing metrics aganist
+  constructor(user_brackets: Record<string, SparseBracket>) {
+    //Unfilled scenario
     this.user_bracket = user_brackets
-    //Create the bracket object from the scenario provided
-    this.bracket = new Bracket(state)
-    this.bracket.create_ProbSelector()
-    //Generate # of instances of the given state
     this.instance = Array()
-    for (let i = 0; i < num_instances; i++) {
-      //Create random bracket, score each user aganist that random bracket
-      let sb: SparseBracket = this.bracket.generate_random_sparse()
-      let inst = new Instance(sb)
-      for (let user in user_brackets) {
-        inst.score_user(user, user_brackets[user])
-      }
-      this.instance.push(inst)
-    }
   }
   count_by_rank() {
     //For each user, count the number of times they are in each position
@@ -735,6 +732,35 @@ class Scenario {
     let table = new Table(Object.keys(this.user_bracket))
     table.load_rank_count(this.instance)
     return table
+  }
+  split(r: number, g: number) {
+    //Split the scenario into two scenarios based on the outcome of a stated game (r,g)
+    let new_scenarios: Record<string, BaseScenario> = {}
+    for (let inst of this.instance) {
+      if (new_scenarios[inst.sparse_bracket[r][g]] === undefined) {
+        //Create scenario if not yet existing
+        new_scenarios[inst.sparse_bracket[r][g]] = new BaseScenario(this.user_bracket)
+      }
+      new_scenarios[inst.sparse_bracket[r][g]].instance.push(inst)
+    }
+    return new_scenarios
+  }
+}
+
+class Scenario extends BaseScenario {
+  bracket: Bracket
+  constructor(state: State, num_instances: number, user_brackets: Record<string, SparseBracket>) {
+    super(user_brackets)
+    //Create the bracket object from the scenario provided
+    this.bracket = new Bracket(state)
+    this.bracket.create_ProbSelector()
+    //Generate # of instances of the given state
+    for (let i = 0; i < num_instances; i++) {
+      //Create random bracket, score each user aganist that random bracket
+      let sb: SparseBracket = this.bracket.generate_random_sparse()
+      let inst = new Instance(sb, user_brackets)
+      this.instance.push(inst)
+    }
   }
 }
 
@@ -763,10 +789,11 @@ class UserBracketManager {
     this.user_brackets = await load_file_json("user_brackets.json")
     //Save field areas
     this.bracket_selector = new Selector(
-      "bracket-select", 
-      ["New Bracket", "Random Bracket"], 
-      Object.keys(this.user_brackets), 
-      (value:string) => this.bracket_select(value))
+      "bracket-select",
+      ["New Bracket", "Random Bracket"],
+      Object.keys(this.user_brackets),
+      (value: string) => this.bracket_select(value))
+    this.bracket_selector.select()
     //Apply functions to the buttons
     document.getElementById("refresh-button").onclick = x => this.bracket_selector.select()
     document.getElementById("delete-button").onclick = x => this.delete()
@@ -870,8 +897,9 @@ class Selector {
   base_options_DOM: Array<HTMLOptionElement>
   more_options_DOM: Array<HTMLOptionElement>
   on_change_function: (value: string) => void
-  constructor(selector_id: string, base_options: Array<string>, more_options:Array<string>, on_change: (value: string) => void) {
+  constructor(selector_id: string, base_options: Array<string>, more_options: Array<string>, on_change: (value: string) => void) {
     //Class for easily reading from and updating the selector buttons
+    //Will Run the onselect function upon creation
     this.selector_DOM = document.getElementById(selector_id) as HTMLSelectElement
     this.on_change_function = on_change
     this.selector_DOM.onchange = x => this.select()
@@ -905,11 +933,14 @@ class Selector {
       this.selector_DOM.appendChild(new_option)
     }
     //Run as-if was just selected
-    this.select()
+    // this.select() -- First selection now must explicitly be called
   }
   select() {
     //Function to run function of current selection
     this.on_change_function(this.selector_DOM.value)
+  }
+  get_value() {
+    return this.selector_DOM.value
   }
 }
 
@@ -953,10 +984,8 @@ class StackedChart extends MyChart {
   constructor(div_id: string, scenario: Scenario) {
     //Create a stacket chart showing each player and their likely finish rank
     super(div_id)
-    //Prepare the data for graphing in the format requested
-    this.table = scenario.count_by_rank()
-    this.table.format({ fraction_by: "place", as_percent: true, decimals: 2, string_suffex: "%" })
     //Prepare the chart
+    this.table = scenario.count_by_rank()
     this.config = {
       type: 'bar',
       data: {
@@ -965,16 +994,16 @@ class StackedChart extends MyChart {
       },
       options: {
         plugins: {
-          legend: {position: "right", reverse: true},
+          legend: { position: "right", reverse: true },
         },
         responsive: true,
         scales: {
-          x: {stacked: true},
-          y: {stacked: true, max: 100},
+          x: { stacked: true },
+          y: { stacked: true, max: 100 },
         },
       },
     }
-    //Chart it!
+    //Chart it (without any data yet)
     this.chart = new Chart(this.canvas_DOM, this.config)
     //Prepare the selector
     this.selector = new Selector(
@@ -983,6 +1012,8 @@ class StackedChart extends MyChart {
       this.table.users,
       value => this.update_data_for_selection(value)
     )
+    //Load the scenario into the chart
+    this.load_scenario(scenario)
   }
   update_data_for_selection(value: string) {
     //Function for updating the table based on the user's selection of data type
@@ -1008,6 +1039,13 @@ class StackedChart extends MyChart {
     }
     this.chart.update()
   }
+  load_scenario(scenario: Scenario) {
+    //Update the chart with a new scenario based on user selection of the data_date
+    this.table = scenario.count_by_rank()
+    this.table.format({ fraction_by: "place", as_percent: true, decimals: 2, string_suffex: "%" })
+    //Update the scenario
+    this.selector.select()
+  }
 }
 
 class UpcomingGameOutcome extends MyChart {
@@ -1025,75 +1063,71 @@ class UpcomingGame {
 
 //---------------------------------------------------------------
 
+class PageManager {
+  states: Array<State> //All of the avaliable states
+  state: State //The most relevant State
+  dates: Array<string>
+  date: string
+  first_run: boolean
+  selector: Selector
+  stackedChart: StackedChart
+  manager: UserBracketManager
+  constructor(states: Array<State>, dates: Array<string>) {
+    //Class that actually loads and manages the page
+    this.states = states
+    this.dates = dates
+    this.first_run = true
+  }
+  async setup() {
+    //Must be called to setup the selector
+    this.selector = new Selector(
+      "data-date-selector",
+      [],
+      this.dates,
+      date => this.load(date))
+    this.selector.select()
+  }
+  async load(x: string) {
+    //Actually sets up the graphs shown on the page
+    //x is not used. This is intentional. Data pulled directly from the appropriate selector
+    this.date = this.selector.get_value()
+    //Load the correct state based on the data date
+    let i = this.dates.indexOf(this.date)
+    this.state = this.states[i]
+    //Main function for loading
+    if (this.first_run === true) {
+      this.manager = new UserBracketManager(this.state)
+      await this.manager.load()
+    }
+    //Create the current Scenario
+    let scenario = new Scenario(this.state, 10000, this.manager.user_brackets)
+    console.log(scenario)
+    let table = scenario.count_by_rank()
+    table.format({ fraction_by: "place", as_percent: true, decimals: 2, string_suffex: "%" })
+    console.log(table)
+    //Create the charts for the first time if needed
+    if (this.first_run === true) {
+      this.first_run = false
+      //Create the stacked chart
+      this.stackedChart = new StackedChart("stacked-chart-div", scenario)
+    } else {
+      //Re-load the charts with data
+      this.stackedChart.load_scenario(scenario)
+    }
+  }
+}
 
 async function main() {
   //Load the primary csv File and convert to states
   // let text: string = await load_file_text(".//fivethirtyeight_ncaa_forecasts.csv") //Testing
   let text: string = await load_file_text("https://projects.fivethirtyeight.com/march-madness-api/2022/fivethirtyeight_ncaa_forecasts.csv") //Production
   let csv = csvToArray(text)
-  let states: Array<State> = breakdown_dates(csv)
-  //Load the bracket creator
-  let manager = new UserBracketManager(states[0])
-  await manager.load()
-  //Tests with Scenario
-  let scenario = new Scenario(states[states.length - 1], 10000, manager.user_brackets)
-  console.log(scenario)
-  let table = scenario.count_by_rank()
-  table.format({ fraction_by: "place", as_percent: true, decimals: 2, string_suffex: "%" })
-  console.log(table)
-  // Playing with graphing!
-  // graphtest(table)
-  new StackedChart("stacked-chart-div", scenario)
-
+  let ret = breakdown_dates(csv) as [Array<State>, Array<string>] 
+  let states: Array<State> = ret[0]
+  let dates: Array<string> = ret[1]
+  //Create the PageManager
+  let pm = new PageManager(states, dates)
+  await pm.setup()
 }
 
 main()
-
-function graphtest(table: Table) {
-  const ctx = document.getElementById('stacked-chart');
-  //Create the base data structure
-  const data = {
-    labels: ["1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th"],
-    datasets: []
-  }
-  //Create the data
-  const background_colors = ["#DFFF00", "#FFBF00", "#FF7F50", "#DE3163", "#9FE2BF", "#40E0D0", "#6495ED", "#CCCCFF",]
-  for (let i = 0; i < table.N; i++) {
-    let user: string = table.users[i]
-    let ds = {
-      label: user,
-      data: table.get_by_user(user, false),
-      backgroundColor: background_colors[i]
-    }
-    data.datasets.push(ds)
-  }
-  //Create the config file
-  const config = {
-    type: 'bar',
-    data: data,
-    options: {
-      plugins: {
-        // title: {
-        //   display: true,
-        //   text: 'Current Probability of Each Player Getting Each Place'
-        // },
-        legend: {
-          position: "right",
-          reverse: true,
-        },
-      },
-      responsive: true,
-      scales: {
-        x: {
-          stacked: true,
-        },
-        y: {
-          stacked: true,
-          max: 100,
-        },
-      }
-    }
-  };
-  //Actually graph
-  const myChart = new Chart(ctx, config);
-}
