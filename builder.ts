@@ -8,8 +8,39 @@ interface Row {
   rd_win: Array<number>;
   results_to: number; team_alive: boolean;
   team_id: number; team_name: string; team_rating: number; team_region: string; team_seed: string; team_slot: number;
+  short_team_name: string;
 }
 type SparseBracket = Array<Array<number>>
+//Short Name Definitions
+let short_name_lookup = {
+  max_length: 13,
+  header_printed: false,
+  already_alerted: [],
+  map: {
+    "Georgia State": "Georgia St",
+    "Boise State": "Bosie St",
+    "North Carolina": "N Carolina",
+    "Saint Peter's":"St Peter's",
+    "New Mexico State":"NM State",
+    "Michigan State":"Michigan St",
+    "Saint Mary's (CA)":"St Mary's CA",
+    "Texas Christian":"TX Christian",
+    "Cal State Fullerton":"CSU Fullerton",
+    "Texas Southern":"TX Southern",
+    "San Diego State":"San Diego St",
+    "South Dakota State":"S Dakota St",
+    "Louisiana State":"LSU",
+    "Southern California":"USC",
+    "Jacksonville State":"Jacksonville",
+    "Alabama-Birmingham":"UAB",
+    "Colorado State":"Colorado St",
+    "Rutgers / Notre Dame":"Rut. / ND",
+    "Wyoming / Indiana":"WY / Indiana",
+    "Texas Southern / Texas A&M-Corpus Christi":"TX S/A&M-CC,",
+    "Wright State / Bryant":"Wright / Bry.",
+  }
+}
+//
 
 function csvToArray(str: string, delimiter: string = ",") {
   //Take csv as a string and convert to array of Objects, convert numbers to numbers
@@ -24,6 +55,7 @@ function csvToArray(str: string, delimiter: string = ",") {
       rd_win: values.slice(3, 10).map(x => Number(x)),
       results_to: Number(values[10]) - 1, team_alive: !!values[11],
       team_id: Number(values[12]), team_name: values[13], team_rating: Number(values[14]), team_region: values[15], team_seed: values[16], team_slot: Number(values[17]),
+      short_team_name: "",
     }
     return object;
   });
@@ -32,8 +64,8 @@ function csvToArray(str: string, delimiter: string = ",") {
 
 class State {
   date: string
-  team_id: Map<number, Row>
-  team_slot: Map<number, Row>
+  team_id: Map<number, Row> //Get row by team_id
+  team_slot: Map<number, Row> //Get slot by team_id
   constructor(date: string) {
     //Save the state of the tournament in a useable format for a given date
     //CSV must be cleaned in advance, such that there is only 1 instance of each team & each rank provided
@@ -68,10 +100,35 @@ class State {
         for (let i = 0; i < 7; i++) {
           even_row.rd_win[i] += odd_row.rd_win[i] //Combine win %
         }
-        //Remove the odd row
+        //Remove the origional rows
         this.team_slot.delete(odd_slot)
+        //Add new team_id
+        row = even_row //Re-name the row
+        this.team_id[even_row.team_id] = row
       }
     }
+    //Add short_team_name - shows the rank and a simplified team name
+    let short_name: string
+    if (short_name_lookup.map[row.team_name] === undefined) {
+      short_name = row.team_name
+    } else {
+      short_name = short_name_lookup.map[row.team_name]
+    }
+    //Alert User of long names
+    if (short_name.length > short_name_lookup.max_length &&
+      !short_name_lookup.already_alerted.includes(short_name)) {
+      //If first alert, write a header
+      if (short_name_lookup.header_printed === false) {
+        short_name_lookup.header_printed = true
+        console.log("Teams with short_team_name that are too long. Max length:", short_name_lookup.max_length)
+      }
+      //Only alert if not seen before 
+      short_name_lookup.already_alerted.push(short_name)
+      console.log(short_name, "|", short_name.length)
+    }
+    //Add the short_name to the row - after adding the team rank
+    short_name = row.team_seed.slice(0, 2) + " " + short_name
+    row.short_team_name = short_name
   }
 }
 
@@ -250,7 +307,7 @@ class Game {
       if (this.team[i] === undefined) {
         this.labels[i].textContent = "-"
       } else {
-        this.labels[i].textContent = this.team[i].team_name.toString()
+        this.labels[i].textContent = this.team[i].short_team_name.toString()
       }
     }
     //Update the radio buttons of the DOM element (if appropriate)
@@ -420,6 +477,15 @@ class Bracket {
       }
     }
   }
+  * yield_each_game() {
+    //Yield each games from the Bracket round property, iterate by round, then game in round
+    //Generator function
+    for (let r = 1; r < 7; r++) {
+      for (let g = 0; g < 2 ** (6 - r); g++) {
+        yield this.get_game(r, g)
+      }
+    }
+  }
 }
 
 class ProbSelector {
@@ -447,19 +513,28 @@ class ProbSelector {
       this.team_id = []
       this.team_slot = []
       this.raw_prob = []
-      this.cum_prob = [0]
-      let p_cum: number = 0
+      let p_sum = 0
       for (let e of elegible) {
         this.team_id.push(e.team_id)
         this.team_slot.push(e.team_slot)
-        let p: number = e.rd_win[this.game.round_num]
+        let p: number
+        if (this.game.round_num === 6) {
+          p = e.rd_win[this.game.round_num]
+        } else {
+          //Future rounds normalized to P(Ai | Ci+1) = [P(Ai) - P(Ai+1)] / P(Ci+1)
+          //Denominator can be applied later since it should be the same for all
+          p = e.rd_win[this.game.round_num] - e.rd_win[this.game.round_num + 1]
+        }
         this.raw_prob.push(p)
-        p_cum += p
-        this.cum_prob.push(p_cum)
+        p_sum += p
+
       }
-      //Confirm that cumulative probability is really close to 1
-      if (!(p_cum > 0.999 && p_cum < 1.001)) {
-        throw Error("Cumulative probability is not in the acticiapted range")
+      //Normalize probabilities
+      this.cum_prob = [0]
+      let p_cum: number = 0
+      for (let raw_p of this.raw_prob) {
+        p_cum += raw_p
+        this.cum_prob.push(p_cum / p_sum)
       }
       //Make the final number actually 1, to avoid errors later
       this.cum_prob[this.cum_prob.length - 1] = 1.0
@@ -565,6 +640,14 @@ class Table {
     this.raw_number = this.fill_square(0)
     //Format as raw (the current data type)
     this.format()
+  }
+  count_instances(): number {
+    //Count the number of instances that are counted in the Table
+    let sum: number = 0
+    for (let user in this.raw_number[0]) {
+      sum += this.raw_number[0][user]
+    }
+    return sum
   }
   fill_square(value: any) {
     //Return a filled square of the format requested
@@ -686,7 +769,7 @@ class Table {
       this[attribute][place][this.users[i]] = arr[i]
     }
   }
-  _get_by_user(attribute: string, user: string) {
+  _get_by_user(attribute: string, user: string): any {
     //Gets an array by user in place order
     let arr: Array<any> = Array()
     for (let i = 0; i < this.N; i++) {
@@ -708,7 +791,7 @@ class Table {
       return this.formatted_number[place]
     }
   }
-  get_by_user(user: string, as_string: boolean = false) {
+  get_by_user(user: string, as_string: boolean = false): any {
     //Return the data for a particular user
     if (as_string) {
       return this._get_by_user("formatted_string", user)
@@ -726,14 +809,13 @@ class BaseScenario {
     this.user_bracket = user_brackets
     this.instance = Array()
   }
-  count_by_rank() {
+  count_by_rank(): Table {
     //For each user, count the number of times they are in each position
-    let rank_count: Record<string, Array<number>> = {}
     let table = new Table(Object.keys(this.user_bracket))
     table.load_rank_count(this.instance)
     return table
   }
-  split(r: number, g: number) {
+  split(r: number, g: number): Record<string, BaseScenario> {
     //Split the scenario into two scenarios based on the outcome of a stated game (r,g)
     let new_scenarios: Record<string, BaseScenario> = {}
     for (let inst of this.instance) {
@@ -985,7 +1067,7 @@ class StackedChart extends MyChart {
     //Create a stacket chart showing each player and their likely finish rank
     super(div_id)
     //Prepare the chart
-    this.table = scenario.count_by_rank()
+    this.table = scenario.count_by_rank() //Table out format not defined
     this.config = {
       type: 'bar',
       data: {
@@ -1048,16 +1130,165 @@ class StackedChart extends MyChart {
   }
 }
 
-class UpcomingGameOutcome extends MyChart {
-  constructor(div_id: string) {
-    //Single column showing winner/loser values of the outcome of a given game
-    super(div_id)
-  }
+interface Subtable {
+  winner_id: string
+  table: Table
 }
-
-class UpcomingGame {
-  constructor() {
+class UpcomingGamesChart extends MyChart {
+  table: Table //Table for the overall scenario
+  tables: Array<Subtable> //Array of Subtable for the breakdowns by game of the scenario
+  selector: Selector
+  selector_place: Selector
+  scenario: Scenario
+  height_per_game_multi_user: number = 16
+  height_per_game_single_user: number = 6
+  constructor(div_id: string, scenario: Scenario) {
     //Double column showing change in outcome for an upcoming game
+    super(div_id)
+    //Prepare the chart
+    this.table = scenario.count_by_rank()
+    this.table.format({ fraction_by: "place", as_percent: true, decimals: 2 })
+    this.config = {
+      type: 'bar',
+      data: {
+        // labels: Should be added in the "load function"
+        datasets: [],
+      },
+      options: {
+        indexAxis: "y",
+        plugins: {
+          legend: { position: "top", reverse: false },
+        },
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: { position: "top" },
+          y: {
+            grid:{
+              //color: Should be set in the loader function
+            },
+          },
+        },
+      },
+    }
+    //Chart it (without any data yet)
+    this.chart = new Chart(this.canvas_DOM, this.config)
+    //Prepare the selector
+    this.selector = new Selector(
+      div_id + "-selector",
+      ["Each Player"],
+      this.table.users,
+      value => this.update_for_selection(value) //value isn't actually used, but legacy...
+    )
+    //Prepare the place selector
+    this.selector_place = new Selector(
+      div_id + "-selector-place",
+      [],
+      this.generate_labels(this.table.users.length),
+      value => this.update_for_selection(value) //value isn't actually used, but legacy...
+    )
+    //Load the provided scenario
+    this.load_scenario(scenario)
+  }
+  update_for_selection(x: string = undefined): void {
+    //Function for updating the table based on the user's selection of data
+    //x is unused and remains for legacy data declaration reasons, user selection should be read directly
+    let selection_value = this.selector.get_value()
+    //Clear existing user data & labels
+    this.config.data.labels = []
+    this.config.options.scales.y.grid.color = ["black", Chart.defaults.borderColor]
+    this.config.data.datasets = []
+    //Create new labels & datasets & gridlines
+    for (let subtable of this.tables) {
+      //New label
+      let row: Row = this.scenario.bracket.state.team_id[subtable.winner_id]
+      let label: string = row.short_team_name
+      let win_percent: number = subtable.table.count_instances() / this.table.count_instances()
+      win_percent *= 100
+      label += " (" + win_percent.toFixed(0) + "%)"
+      this.config.data.labels.push(label)
+      //Add the gridline
+      // this.config.options.scales.y.grid.color.push("red")
+      // this.config.options.scales.y.grid.color.push(Chart.defaults.borderColor)
+    }
+    //New dataset
+    //Write new daata based on selection
+    let users: Array<string>
+    if (selection_value === "Each Player") {
+      //Show all the data
+      users = this.table.users
+    } else {
+      //Show only the data of the user selected
+      users = [selection_value]
+    }
+    //Create the dataset
+    //Get the place highlight
+    let place_string = this.generate_labels(this.table.users.length)
+    let place_focus: number = place_string.indexOf(this.selector_place.get_value())
+    for (let user of users) {
+      let deltas: Array<any> = []
+      for (let subtable of this.tables) {
+        //Find the difference between the new and the old values, display that
+        let new_value = subtable.table.get_by_user(user, false)[place_focus]
+        let old_value = this.table.get_by_user(user, false)[place_focus]
+        deltas.push(new_value - old_value)
+      }
+      let ds: ChartDataSet = {
+        label: user,
+        data: deltas,
+        backgroundColor: this.get_color(this.table.users.indexOf(user))
+      }
+      this.config.data.datasets.push(ds)
+    }
+    //Update the chart
+    //Change the chart height
+    let height: number
+    if (users.length === 1) {
+      height = this.tables.length * this.height_per_game_single_user
+    } else {
+      height = this.tables.length * this.height_per_game_multi_user
+    }
+    this.canvas_DOM.parentElement.style.height = height.toString() + "vmin"
+    this.chart.update()
+  }
+  load_scenario(scenario: Scenario): void {
+    //Load a scenario into the chart
+    this.scenario = scenario
+    this.table = scenario.count_by_rank()
+    this.table.format({ fraction_by: "place", as_percent: true, decimals: 2 })
+    this.tables = []
+    //Determine which games are "upcoming"
+    for (let r = 1; r < 7; r++) {
+      for (let g = 0; g < 2 ** (6 - r); g++) {
+        let game = this.scenario.bracket.get_game(r, g)
+        //See if both parents have been decided or are undefined & game itself does not have a winner
+        let is_upcoming: boolean = true
+        for (let parent of game.parent) {
+          //Ensure that both the parent games are decided
+          if (parent !== undefined && parent.winner === undefined) {
+            is_upcoming = false
+          }
+        }
+        if (game.winner !== undefined) {
+          //Ensure the game isn't decided
+          is_upcoming = false
+        }
+        //Only do things with the upcoming games
+        if (is_upcoming) {
+          //Split the scenario into two
+          let new_scenarios: Record<string, BaseScenario> = scenario.split(r, g)
+          for (let key in new_scenarios) {
+            //Iterate through the two new scenarios and add tables
+            let new_table: Table = new_scenarios[key].count_by_rank()
+            new_table.format({ fraction_by: "place", as_percent: true, decimals: 2 })
+            this.tables.push({ winner_id: key, table: new_table })
+          }
+        }
+      }
+    }
+    //Done with filling out the tables
+    //Update the scenario
+    this.update_for_selection()
   }
 }
 
@@ -1071,6 +1302,7 @@ class PageManager {
   first_run: boolean
   selector: Selector
   stackedChart: StackedChart
+  upcomingChart: UpcomingGamesChart
   manager: UserBracketManager
   constructor(states: Array<State>, dates: Array<string>) {
     //Class that actually loads and manages the page
@@ -1083,7 +1315,7 @@ class PageManager {
     this.selector = new Selector(
       "data-date-selector",
       [],
-      this.dates,
+      this.dates,//.slice().reverse(),
       date => this.load(date))
     this.selector.select()
   }
@@ -1091,6 +1323,7 @@ class PageManager {
     //Actually sets up the graphs shown on the page
     //x is not used. This is intentional. Data pulled directly from the appropriate selector
     this.date = this.selector.get_value()
+    console.log("Data date selection:", this.date)
     //Load the correct state based on the data date
     let i = this.dates.indexOf(this.date)
     this.state = this.states[i]
@@ -1103,26 +1336,27 @@ class PageManager {
     let scenario = new Scenario(this.state, 10000, this.manager.user_brackets)
     console.log(scenario)
     let table = scenario.count_by_rank()
-    table.format({ fraction_by: "place", as_percent: true, decimals: 2, string_suffex: "%" })
-    console.log(table)
     //Create the charts for the first time if needed
     if (this.first_run === true) {
       this.first_run = false
       //Create the stacked chart
       this.stackedChart = new StackedChart("stacked-chart-div", scenario)
+      //Play with the upcoming games
+      this.upcomingChart = new UpcomingGamesChart("upcoming-game-div", scenario)
     } else {
       //Re-load the charts with data
       this.stackedChart.load_scenario(scenario)
+      this.upcomingChart.load_scenario(scenario)
     }
   }
 }
 
 async function main() {
   //Load the primary csv File and convert to states
-  // let text: string = await load_file_text(".//fivethirtyeight_ncaa_forecasts.csv") //Testing
-  let text: string = await load_file_text("https://projects.fivethirtyeight.com/march-madness-api/2022/fivethirtyeight_ncaa_forecasts.csv") //Production
+  let text: string = await load_file_text(".//fivethirtyeight_ncaa_forecasts.csv") //Testing
+  // let text: string = await load_file_text("https://projects.fivethirtyeight.com/march-madness-api/2022/fivethirtyeight_ncaa_forecasts.csv") //Production
   let csv = csvToArray(text)
-  let ret = breakdown_dates(csv) as [Array<State>, Array<string>] 
+  let ret = breakdown_dates(csv) as [Array<State>, Array<string>]
   let states: Array<State> = ret[0]
   let dates: Array<string> = ret[1]
   //Create the PageManager

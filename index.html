@@ -9,7 +9,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
         * {
-            --selectorWidth: 10vw;
+            --selectorWidth: 12vmin;
             /* font-family: 'Courier New', monospace; */
             font-family: 'Arial';
             padding: 0;
@@ -50,7 +50,7 @@
             text-align: left;
             padding: calc(1/20*var(--selectorWidth));
             padding-left: calc(2/20*var(--selectorWidth));
-            font-size: calc(3/20*var(--selectorWidth));
+            font-size: calc(0.11*var(--selectorWidth));
         }
 
         .radio-button {
@@ -61,6 +61,12 @@
         .stacked-chart {
             height: 50vmin;
             width: 90vmin;
+            margin: auto;
+        }
+
+        .upcoming-chart {
+            width: 90vmin;
+            height: 50vmin;
             margin: auto;
         }
 
@@ -90,6 +96,20 @@
             </div>
             <div class="stacked-chart">
                 <canvas id="stacked-chart"></canvas>
+            </div>
+        </div>
+        <br>
+        <!-- Upcoming Game area-->
+        <div id="upcoming-game-div">
+            <div>
+                Change in Probability for 
+                <select name="upcoming-game-div-selector" id="upcoming-game-div-selector"></select>
+                Getting 
+                <select name="upcoming-game-div-selector-place" id="upcoming-game-div-selector-place"></select>
+                Place after Each Upcoming Game
+            </div>
+            <div class="upcoming-chart">
+                <canvas id="upcoming-chart"></canvas>
             </div>
         </div>
         <br>
@@ -137,6 +157,7 @@
                 <input type="radio" id="select-B" name="radio-select-template" class="radio-button">
                 <label id="name-B" for="select-B">Team-B</label>
             </div>
+            <!-- Upcoming game template-->
         </div>
 
         <br>
