@@ -42,7 +42,7 @@ let short_name_lookup = {
 }
 //
 
-function csvToArray(str: string, delimiter: string = ",") {
+function csvToArray2(str: string, delimiter: string = ",") {
   //Take csv as a string and convert to array of Objects, convert numbers to numbers
   //Based on a stack overflow answer
   const headers = str.slice(0, str.indexOf("\n")).split(delimiter);
@@ -1355,7 +1355,7 @@ async function main() {
   //Load the primary csv File and convert to states
   let text: string = await load_file_text(".//fivethirtyeight_ncaa_forecasts.csv") //Testing
   // let text: string = await load_file_text("https://projects.fivethirtyeight.com/march-madness-api/2022/fivethirtyeight_ncaa_forecasts.csv") //Production
-  let csv = csvToArray(text)
+  let csv = csvToArray2(text)
   let ret = breakdown_dates(csv) as [Array<State>, Array<string>]
   let states: Array<State> = ret[0]
   let dates: Array<string> = ret[1]

@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<!--HTML and basic JavaScript copied from https://developer.mozilla.org/en-US/docs/Games/Tutorials/2D_Breakout_game_pure_JavaScript/Create_the_Canvas_and_draw_on_it-->
 <html>
 
 <head>
@@ -16,7 +15,9 @@
         <br>
         <!-- Data date selection-->
         <div id="data-date">
-            Predictions Data Date
+            View data for
+            <select name="user-selector" id="user-selector"></select>
+             | Prediction data date
             <select name="data-date-selector" id="data-date-selector"></select>
         </div>
         <br>
@@ -24,82 +25,57 @@
         <!-- Stacked Chart-->
         <div id="stacked-chart-div">
             <div>
-                Current probability of
-                <select name="stacked-chart-div-selector" id="stacked-chart-div-selector"></select>
-                getting each place
+                Probability of getting each place (lower better)
             </div>
             <div class="stacked-chart">
                 <canvas id="stacked-chart"></canvas>
+            </div>
+        </div>
+        <!-- Histogram of Scores Chart-->
+        <div id="scores-histogram-chart-div">
+            <div>
+                Probability of getting score (higher better)
+            </div>
+            <div class="stacked-chart">
+                <canvas id="scores-histogram-chart"></canvas>
+            </div>
+        </div>
+        <!-- Average Score Ovver Time Chart-->
+        <div id="score-chart-div">
+            <div>
+                Predicted final score over time (higher better)
+            </div>
+            <div class="stacked-chart">
+                <canvas id="score-chart"></canvas>
+            </div>
+        </div>
+        <br>
+        <!-- Average Place Ovver Time Chart-->
+        <div id="place-chart-div">
+            <div>
+                Predicted final place over time (lower better)
+            </div>
+            <div class="stacked-chart">
+                <canvas id="place-chart"></canvas>
             </div>
         </div>
         <br>
         <!-- Upcoming Game area-->
         <div id="upcoming-game-div">
             <div>
-                Change in average place for
-                <select name="upcoming-game-div-selector" id="upcoming-game-div-selector"></select>
-                Getting
-                <select name="upcoming-game-div-selector-place" id="upcoming-game-div-selector-place"></select>
-                Place after Each Upcoming Game
+                Change in average place after each upcoming game (lower better)
             </div>
             <div class="upcoming-chart">
                 <canvas id="upcoming-chart"></canvas>
             </div>
         </div>
         <br>
-        <!-- Bracket Input REMOVED new script for auto scraping brackets-->
-        <div id="bracket-input-window">
-            <div id="bracket-controls">
-                <label for="bracket-select">Show</label>
-                <select name="bracket-select" id="bracket-select">
-                    <!-- <option value="new-bracket">New Bracket</option>
-                    <option value="random-bracket">Random Bracket</option> -->
-                </select>
-                &emsp;
-                <label style="text-align: center" for="bracket-name">Bracket Name</label>
-                <input type="text" id="bracket-name" value="default">
-                &emsp;
-                <button id="refresh-button">Refresh</button>
-                <button id="delete-button">Delete</button>
-                <button id="save-button">Save</button>
-                <button id="download-brackets">Download File</button>
-                <button id="upload-brackets">Upload File</button>
-                <br><br>
-                <div id="message-area">Message</div>
-            </div>
-            <br><br>
-            <div class="bracket" id="bracket-input">
-                <!-- Where to create a bracket object -->
-            </div>
-            <div class="bracket" id="bracekt2"></div>
-        </div>
-
-        <!-- Everything below here is templates-->
-        <div id="templates" class="hidden">
-            <!-- Generic select template-->
-            <option id="generic-select-option-template"></option>
-            <!-- Bracket slector option template-->
-            <option id="bracket-select-option-template">New Bracket</option>
-            <!-- Column template-->
-            <div class="column" id="column-template">
-            </div>
-            <!-- Radio select template-->
-            <div class="selector" id="selector-template">
-                <input type="radio" id="select-A" name="radio-select-template" class="radio-button">
-                <label id="name-A" for="select-A">Team-A</label>
-                <br>
-                <input type="radio" id="select-B" name="radio-select-template" class="radio-button">
-                <label id="name-B" for="select-B">Team-B</label>
-            </div>
-            <!-- Upcoming game template-->
-        </div>
-
         <br>
-        <div style="text-align: center; font-size: 2vmin">v0.5.0</div>
+        <div style="text-align: center; font-size: 2vmin">v0.8</div>
 
         <!-- Scripts -->
         <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.1/chart.js"></script>
-        <script src="./out/builder.js"></script>
+        <script src="./out/builder2.js"></script>
     </div>
 
 </body>

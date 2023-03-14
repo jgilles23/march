@@ -1,11 +1,21 @@
 //Frequently changed constants
-const primarySimulations = 10 ** 2;
+const primarySimulations = 10 ** 4;
 const secondarySimulations = Math.floor(primarySimulations / 10);
 const seedString = "march madness";
+const height_base = 20;
+const height_per_game_single_user = 3;
+const height_per_game_multi_user = 5;
+const userSelectorID = "user-selector";
 //Never changed constants
 const scoreByRound = [0, 10, 20, 40, 80, 160, 320];
 //Game 63 contains 64 probabilities
 //HELPER FUNCTIONS
+function sortDescending(numbers) {
+    //Sort numbers in a list
+    return numbers.sort(function (a, b) {
+        return b - a;
+    });
+}
 //Random number generator
 //https://stackoverflow.com/questions/521295/seeding-the-random-number-generator-in-javascript
 function cyrb128(str) {
@@ -110,7 +120,10 @@ function getTeamPositionInGame(game, team) {
     //0 indexed; return position within a game
     return team - getFirstTeam(game);
 }
-function csvToArray(str, delimiter = ",") {
+function getNumberOfGamesInRound(round) {
+    return 64 / divisor[round];
+}
+function csvToArray3(str, delimiter = ",") {
     //Take csv as a string and convert to array of Objects, convert numbers to numbers
     //Based on a stack overflow answer
     const headers = str.slice(0, str.indexOf("\n")).split(delimiter);
@@ -129,19 +142,19 @@ function csvToArray(str, delimiter = ",") {
     });
     return arr; // return the array
 }
-async function load_file_json(filepath) {
+async function load_file_json2(filepath) {
     //Load a file and convert to object using json
     let response = await fetch(filepath);
     let obj = await response.json();
     return obj;
 }
-async function load_file_text(filepath) {
+async function load_file_text2(filepath) {
     //Load a file and convert to text
     let response = await fetch(filepath);
     let text = await response.text();
     return text;
 }
-function parse538csv(csv, teams) {
+function parse538csv(csv) {
     // Return array games with associated probablities for each team by date
     let probabilitiesByDate = {};
     for (let item of csv) {
@@ -167,7 +180,6 @@ function parse538csv(csv, teams) {
         //Find matching team
         const regionLookup = { "South": 33, "East": 17, "Midwest": 49, "West": 1 };
         let teamID = Math.floor(item["team_slot"] / 2) % 16 + regionLookup[item["team_region"]];
-        let team = teams[teamID];
         //Assign probailities
         for (let i = 1; i <= 6; i++) {
             let game = getGame(teamID, i);
@@ -177,10 +189,72 @@ function parse538csv(csv, teams) {
     //Return the parsed data
     return probabilitiesByDate;
 }
+//DATA ANALYSIS FUNCTIONS
+function mean(data) {
+    // Takes the average of an array of numbers
+    // Returns 0 if no data provided
+    if (data.length === 0) {
+        return 0;
+    }
+    let sum = 0;
+    for (let x of data) {
+        sum += x;
+    }
+    return sum / data.length;
+}
+function histogram(data, applySuffix, categories) {
+    // Returns a histogram object of an array of numbers --- normalized out of 1
+    // If suffixFlag is true 1 -> 1st, 2 -> 2nd, etc.
+    // If categories are provided will align each number to the NEAREST category
+    let histogram = {};
+    if (categories !== undefined) {
+        for (let category of categories) {
+            if (applySuffix === true) {
+                histogram[addNumberSuffix(category)] = 0;
+            }
+            else {
+                histogram[category] = 0;
+            }
+        }
+    }
+    for (let x of data) {
+        let y = x;
+        if (applySuffix === true) {
+            y = addNumberSuffix(x);
+        }
+        //Add to the count of the histogram
+        if (y in histogram) {
+            histogram[y] += 1 / data.length;
+        }
+        else if (categories === undefined) {
+            histogram[y] = 1 / data.length;
+        }
+        else {
+            throw "Category not defined when trying to add data.";
+        }
+    }
+    return histogram;
+}
+// STRING MANIPULATION FUNCTIONS
+function addNumberSuffix(num) {
+    if (num === 1) {
+        return "1st";
+    }
+    else if (num === 2) {
+        return "2nd";
+    }
+    else if (num === 3) {
+        return "3rd";
+    }
+    else {
+        return num.toString() + "th";
+    }
+}
 class Scenario2 {
-    constructor(probTable, brackets) {
+    constructor(probTable, brackets, date) {
         // Class used to easily calculate scenarios and apply those scenarios to user brackets - graphs are then produced using this data
         this.probTable = probTable;
+        this.date = date;
         this.brackets = brackets;
         this.simulations = [];
         this.scores = {};
@@ -190,16 +264,14 @@ class Scenario2 {
             this.places[user] = [];
         }
         this.calculateSimulations(secondarySimulations);
-        console.log(this.scores);
-        console.log(this.places);
     }
     calculateSimulations(n) {
         //calculate until there are n simulations; if n already met, do nothing
         while (this.simulations.length < n) {
-            this.addSimulation();
+            this.generateSimulation();
         }
     }
-    addSimulation() {
+    generateSimulation() {
         //Add a simulation to the simulations list by iterating through the probability table and creating sub-games
         let simulaiton = new Array(64);
         for (let game = 63; game > 0; game--) {
@@ -232,7 +304,7 @@ class Scenario2 {
             allScores.push(score);
         }
         //Calculate the position per user --- Apportion Ties Randomly --- points in a tie are split between the players
-        allScores.sort();
+        allScores = sortDescending(allScores);
         for (let user in this.brackets) {
             let score = this.scores[user][this.scores[user].length - 1];
             let positions = [];
@@ -251,21 +323,461 @@ class Scenario2 {
             }
         }
     }
+    possibleWinners(game) {
+        //Returns sorted array of possible winners for a given game (look at percents in  prob table)
+        let possibleWinners = [];
+        for (let i = 0; i < this.probTable[game].length; i++) {
+            if (this.probTable[game][i] > 0) {
+                possibleWinners.push(getFirstTeam(game) + i);
+            }
+        }
+        //Should automatically be sorted
+        return possibleWinners;
+    }
+    splitByGameWinner(data, game) {
+        // Split the dataset into new arrays mapped to the game winners
+        // Provide game number
+        // Used to split average position finish by the game winner for each game
+        if (this.simulations.length !== data.length) {
+            throw "Simulations and provided data must have the same length";
+        }
+        //Establish splitdata output
+        let splitData = new Map();
+        //Establish possible winners
+        for (let winner of this.possibleWinners(game)) {
+            splitData[winner] = [];
+        }
+        //Assign to data set based on those wins
+        for (let i = 0; i < this.simulations.length; i++) {
+            let winner = this.simulations[i][game];
+            splitData[winner].push(data[i]);
+        }
+        return splitData;
+    }
+    isGameDecided(game) {
+        // Returns a flag if the provided game is already decided in the provided data set
+        for (let p of this.probTable[game]) {
+            if (p === 1) {
+                return true;
+            }
+        }
+        return false;
+    }
+    averagePlaceByUser() {
+        let averagePlaceByUser = new Map();
+        for (let user in this.brackets) {
+            averagePlaceByUser[user] = mean(this.places[user]);
+        }
+        return averagePlaceByUser;
+    }
 }
-// require(".//team_data.json")
-// require(".//fivethirtyeight_ncaa_forecasts.csv")
+class MyChart2 {
+    constructor(div_id, selector_id, scenario, teams) {
+        //Class for standard chart setup functions, etc
+        this.div_DOM = document.getElementById(div_id);
+        this.canvas_DOM = this.div_DOM.getElementsByTagName("canvas")[0];
+        this.scenario = scenario;
+        this.teams = teams;
+        //Prepare the selector
+        this.selectorDOM = document.getElementById(selector_id);
+    }
+    updateScenario(scenario) {
+        //Change the scenario when the user does something that would change the requested scenario
+        this.scenario = scenario;
+        this.load();
+    }
+    get_color(user) {
+        let i = 0;
+        for (let u in this.scenario.brackets) {
+            if (user === u) {
+                break;
+            }
+            i += 1;
+        }
+        let colors = ["#DFFF00", "#FFBF00", "#FF7F50", "#DE3163", "#9FE2BF", "#40E0D0", "#6495ED", "#CCCCFF",];
+        if (i < colors.length) {
+            return colors[i];
+        }
+        else {
+            return "#000000"; //black
+        }
+    }
+    getUsersFromSelector() {
+        let selectedValue = this.selectorDOM.value;
+        let users = [];
+        if (selectedValue === "Each Player") {
+            for (let user in this.scenario.brackets) {
+                users.push(user);
+            }
+        }
+        else {
+            users.push(selectedValue);
+        }
+        return users;
+    }
+    load() {
+        throw "Load Must be Implemented by sub-class";
+    }
+    formatUserWithPlace(user) {
+        return `${user} (${mean(this.scenario.places[user]).toFixed(1)})`;
+    }
+    formatUserWithScore(user) {
+        return `${user} (${mean(this.scenario.scores[user]).toFixed(0)})`;
+    }
+    formatTeamLong(teamID, game) {
+        let x = getTeamPositionInGame(game, teamID); //Team position in the game
+        return `${this.teams[teamID].seed} ${this.teams[teamID].name} (${(this.scenario.probTable[game][x] * 100).toFixed(0)}%)`;
+    }
+}
+class StackedChart2 extends MyChart2 {
+    constructor(scenario, teams) {
+        //Create a stacket chart showing each player and their likely finish rank
+        super("stacked-chart-div", userSelectorID, scenario, teams);
+        //Prepare the chart
+        this.config = {
+            type: 'bar',
+            data: {
+                labels: [],
+                datasets: [],
+            },
+            options: {
+                plugins: {
+                    legend: { position: "right", reverse: true },
+                },
+                responsive: true,
+                scales: {
+                    x: { stacked: true },
+                    y: { stacked: true, max: 1 },
+                },
+            },
+        };
+        //Chart it (without any data yet)
+        this.chart = new Chart(this.canvas_DOM, this.config);
+        //Load the initial data
+        this.load();
+    }
+    load() {
+        // Load the scenario into the chat & display
+        // Show only the selected data
+        let users = this.getUsersFromSelector();
+        // Add data
+        // this.config.data.labels = users
+        this.config.data.datasets = [];
+        for (let user of users) {
+            this.config.data.labels = [];
+            let numUsers = Object.keys(this.scenario.brackets).length;
+            let categories = [];
+            for (let i = 1; i <= numUsers; i++) {
+                categories.push(i);
+            }
+            this.config.data.datasets.push({
+                label: this.formatUserWithPlace(user),
+                data: histogram(this.scenario.places[user], true, categories),
+                backgroundColor: this.get_color(user)
+            });
+        }
+        this.chart.update();
+    }
+}
+class ScoreHistorgramChart extends MyChart2 {
+    constructor(scenario, teams) {
+        // Chart for displaying histogram of the player score at the current state
+        // Likely to be overloaded with all players showing
+        // May need to bucket scores when all players are active...
+        super("scores-histogram-chart-div", userSelectorID, scenario, teams);
+        this.config = {
+            type: 'bar',
+            data: {
+                datasets: [],
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                }
+            },
+        };
+        // Load the chart with no data
+        this.chart = new Chart(this.canvas_DOM, this.config);
+        //Load the initial data
+        this.load();
+    }
+    load() {
+        // Load the scenario into the chat & display
+        let users = this.getUsersFromSelector();
+        // Add data
+        this.config.data.datasets = [];
+        for (let user of users) {
+            this.config.data.labels = [];
+            let numUsers = Object.keys(this.scenario.brackets).length;
+            let categories = [];
+            for (let i = 1; i <= numUsers; i++) {
+                categories.push(i);
+            }
+            this.config.data.datasets.push({
+                label: this.formatUserWithScore(user),
+                data: histogram(this.scenario.scores[user], false),
+                backgroundColor: this.get_color(user)
+            });
+        }
+        this.chart.update();
+    }
+}
+class GameChart extends MyChart2 {
+    constructor(scenario, teams) {
+        // Class for gaphing upcoming games with bars for effect on
+        // Players average finishing place in the tournament
+        super("upcoming-game-div", userSelectorID, scenario, teams);
+        this.config = {
+            type: 'bar',
+            data: {
+                // labels: Should be added in the "load function"
+                datasets: [],
+            },
+            options: {
+                indexAxis: "y",
+                plugins: {
+                    legend: { position: "top", reverse: false },
+                },
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { position: "top" },
+                    y: {
+                        grid: {
+                            color: ["black", Chart.defaults.borderColor]
+                        },
+                    },
+                },
+            },
+        };
+        //Chart it (without any data yet)
+        this.chart = new Chart(this.canvas_DOM, this.config);
+        //Load the first round of data
+        this.load();
+    }
+    load() {
+        //Load the saved scenario into the chart
+        this.config.data.datasets = []; //Clear the current dataset
+        this.config.data.labels = [];
+        let averagePlaceByUser = this.scenario.averagePlaceByUser();
+        //Determine the upcomming games & Split data
+        let users = this.getUsersFromSelector();
+        let firstUserFlag = true;
+        for (let user of users) {
+            // Pre-render the data set for this user
+            let userDataSet = {
+                label: this.formatUserWithPlace(user),
+                data: [],
+                backgroundColor: this.get_color(user)
+            };
+            //Iterate through each game
+            for (let round = 1; round <= 6; round++) {
+                let foundUndecidedFlag = false;
+                for (let i = 0; i < getNumberOfGamesInRound(round); i++) {
+                    let game = base[round] + i;
+                    if (this.scenario.isGameDecided(game) === true) {
+                        continue;
+                    }
+                    // Stall on the undecided games in the round
+                    foundUndecidedFlag = true;
+                    // Establish overall labels for the teams
+                    if (firstUserFlag === true) {
+                        for (let winner of this.scenario.possibleWinners(game)) {
+                            this.config.data.labels.push(this.formatTeamLong(winner, game));
+                        }
+                    }
+                    // Push data to dataset
+                    let splitPlace = this.scenario.splitByGameWinner(this.scenario.places[user], game);
+                    for (let winner of this.scenario.possibleWinners(game)) {
+                        let m = mean(splitPlace[winner]);
+                        if (m === 0) {
+                            userDataSet.data.push(0);
+                        }
+                        else {
+                            userDataSet.data.push(m - averagePlaceByUser[user]);
+                        }
+                    }
+                }
+                //Break once current round calculation is complete
+                if (foundUndecidedFlag === true) {
+                    break;
+                }
+            }
+            //Unset first user
+            firstUserFlag = false;
+            // Add data set to the model
+            this.config.data.datasets.push(userDataSet);
+        }
+        //Change the chart height
+        let height;
+        if (users.length === 1) {
+            height = this.config.data.labels.length * height_per_game_single_user + height_base;
+        }
+        else {
+            height = this.config.data.labels.length * height_per_game_multi_user + height_base;
+        }
+        this.canvas_DOM.parentElement.style.height = height.toString() + "vmin";
+        // Update the chart
+        this.chart.update();
+    }
+}
+class LineTimeChart extends MyChart2 {
+    constructor(div_id, scenarios, mostRecentScenario, teams) {
+        //Create a line chart of the average finishing score of the player over time
+        super(div_id, userSelectorID, mostRecentScenario, teams);
+        this.scenarios = scenarios;
+        //Prepare the chart
+        this.config = {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: []
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        reverse: true
+                    },
+                }
+            },
+        };
+        //Chart it (without any data yet)
+        this.chart = new Chart(this.canvas_DOM, this.config);
+        // Load the chart
+        this.load();
+    }
+    load() {
+        this.config.data.datasets = [];
+        this.config.data.labels = [];
+        let firstUserFlag = true;
+        for (let user of this.getUsersFromSelector()) {
+            // Create a data set for each user
+            let userDataSet = {
+                label: this.formatUser(user),
+                data: [],
+                backgroundColor: this.get_color(user),
+                borderColor: this.get_color(user)
+            };
+            //Reverse the dates
+            let reverseDates = [];
+            for (let date in this.scenarios) {
+                reverseDates.unshift(date);
+            }
+            // Iterate through each date to pull the average score
+            for (let date of reverseDates) {
+                // Push labels for the first user
+                if (firstUserFlag === true) {
+                    this.config.data.labels.push(date);
+                }
+                userDataSet.data.push(this.calcMetric(date, user));
+            }
+            firstUserFlag = false;
+            this.config.data.datasets.push(userDataSet);
+        }
+        //Update the chart
+        this.chart.update();
+    }
+    calcMetric(date, user) {
+        throw "calcMetric must be implemented by sub-classes.";
+    }
+    formatUser(user) {
+        throw "formatUser must be implemented by sub-classes";
+    }
+}
+class ScoreChart extends LineTimeChart {
+    // Shows score over time
+    calcMetric(date, user) {
+        return mean(this.scenarios[date].scores[user]);
+    }
+    formatUser(user) {
+        return this.formatUserWithScore(user);
+    }
+}
+class PlaceOverTimeChart extends LineTimeChart {
+    // Shows average place over time
+    calcMetric(date, user) {
+        return mean(this.scenarios[date].places[user]);
+    }
+    formatUser(user) {
+        return this.formatUserWithPlace(user);
+    }
+}
 async function main2() {
     //Load the teams data
-    let teams = await load_file_json("https://jgilles23.github.io/march/team_data.json");
+    let teams = await load_file_json2("https://jgilles23.github.io/march/team_data.json");
     //Load the primary csv File and convert to states
-    let text = await load_file_text("https://jgilles23.github.io/march/fivethirtyeight_ncaa_forecasts.csv"); //Testing
-    // let text: string = await load_file_text("https://projects.fivethirtyeight.com/march-madness-api/2022/fivethirtyeight_ncaa_forecasts.csv") //Production
-    let csv = csvToArray(text);
-    let probabilitiesByDate = parse538csv(csv, teams);
+    let text = await load_file_text2("https://jgilles23.github.io/march/fivethirtyeight_ncaa_forecasts.csv"); //Testing
+    // let text: string = await load_file_text2("https://projects.fivethirtyeight.com/march-madness-api/2022/fivethirtyeight_ncaa_forecasts.csv") //Production
+    let csv = csvToArray3(text);
+    let probabilitiesByDate = parse538csv(csv);
     // load user bracket selections
-    let backetsByUser = await load_file_json("https://jgilles23.github.io/march/user_brackets_new.json");
+    let backetsByUser = await load_file_json2("https://jgilles23.github.io/march/user_brackets_new.json");
+    //Add users to the selector
+    let userSelectorDOM = document.getElementById(userSelectorID);
+    let option = document.createElement("option");
+    userSelectorDOM.add(option);
+    option.textContent = "Each Player";
+    option.value = "Each Player";
+    for (let user in backetsByUser) {
+        option = document.createElement("option");
+        userSelectorDOM.add(option);
+        option.textContent = user;
+        option.value = user;
+    }
+    // Add data date to a selector
+    let dataDateSelectorDOM = document.getElementById("data-date-selector");
+    for (let date in probabilitiesByDate) {
+        option = document.createElement("option");
+        dataDateSelectorDOM.add(option);
+        option.textContent = date;
+        option.value = date;
+    }
     //Create a scenario per date
-    new Scenario2(probabilitiesByDate["2022-03-13"], backetsByUser);
+    let scenarioByDate = new Map();
+    for (let date in probabilitiesByDate) {
+        scenarioByDate[date] = new Scenario2(probabilitiesByDate[date], backetsByUser, date);
+    }
+    //Get the most recent date
+    let mostRecentDate = "";
+    for (let date in probabilitiesByDate) {
+        mostRecentDate = date;
+        break;
+    }
+    //Create a stacked chart
+    let stackedChart = new StackedChart2(scenarioByDate[mostRecentDate], teams);
+    //Create GameChart
+    let gameChart = new GameChart(scenarioByDate[mostRecentDate], teams);
+    //Create Score over time chart
+    let scoreChart = new ScoreChart("score-chart-div", scenarioByDate, scenarioByDate[mostRecentDate], teams);
+    //Create Place over time chart
+    let placeChart = new PlaceOverTimeChart("place-chart-div", scenarioByDate, scenarioByDate[mostRecentDate], teams);
+    //Create Score Histogram Chart
+    let scoreHistogramChart = new ScoreHistorgramChart(scenarioByDate[mostRecentDate], teams);
+    //Add click action to the main selector - Select all players or only one player
+    userSelectorDOM.onchange = x => {
+        stackedChart.load();
+        gameChart.load();
+        scoreChart.load();
+        placeChart.load();
+        scoreHistogramChart.load();
+    };
+    //Add click to data date selector - Select something other than the most recent data date
+    dataDateSelectorDOM.onchange = x => {
+        let dataDate = dataDateSelectorDOM.value;
+        let newScenario = scenarioByDate[dataDate];
+        stackedChart.updateScenario(newScenario);
+        scoreHistogramChart.updateScenario(newScenario);
+        gameChart.updateScenario(newScenario);
+        //Create filtered scenarios to the new Data Date
+        let newScenarios = new Map();
+        scoreChart.updateScenario(newScenario);
+        placeChart.updateScenario(newScenario);
+    };
 }
 main2();
 //# sourceMappingURL=builder2.js.map
