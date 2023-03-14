@@ -1,0 +1,65 @@
+* {
+    --selectorWidth: 12vmin;
+    /* font-family: 'Courier New', monospace; */
+    font-family: 'Arial';
+    padding: 0;
+    margin: 0;
+    text-align: center;
+    /* -webkit-user-select: none; */
+    /* Safari */
+    /* -moz-user-select: none; */
+    /* Firefox */
+    /* -ms-user-select: none; */
+    /* IE10+/Edge */
+    /* user-select: none; */
+    /* Standard */
+    /* touch-action: pan-y; */
+}
+
+.headline {
+    text-align: center;
+    font-size: 5vmin;
+}
+
+.bracket {
+    display: flex;
+}
+
+.column {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    margin-left: calc(1/10*var(--selectorWidth));
+}
+
+.selector {
+    display: block;
+    width: var(--selectorWidth);
+    margin: calc(1/20*var(--selectorWidth)) 0vw;
+    border: 1px solid black;
+    text-align: left;
+    padding: calc(1/20*var(--selectorWidth));
+    padding-left: calc(2/20*var(--selectorWidth));
+    font-size: calc(0.11*var(--selectorWidth));
+}
+
+.radio-button {
+    height: calc(1/10*var(--selectorWidth));
+    width: calc(1/10*var(--selectorWidth));
+}
+
+.stacked-chart {
+    height: 50vmin;
+    width: 90vmin;
+    margin: auto;
+}
+
+.upcoming-chart {
+    width: 90vmin;
+    height: 50vmin;
+    margin: auto;
+}
+
+.hidden {
+    display: none;
+}

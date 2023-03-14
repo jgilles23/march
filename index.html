@@ -4,76 +4,10 @@
 
 <head>
     <meta charset="utf-8" />
-    <title>Bracket Creator</title>
+    <title>Bracket Analysis</title>
     <!-- <link rel="icon" type="image/x-icon" href="./icons/favicon.ico"> -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <style>
-        * {
-            --selectorWidth: 12vmin;
-            /* font-family: 'Courier New', monospace; */
-            font-family: 'Arial';
-            padding: 0;
-            margin: 0;
-            text-align: center;
-            /* -webkit-user-select: none; */
-            /* Safari */
-            /* -moz-user-select: none; */
-            /* Firefox */
-            /* -ms-user-select: none; */
-            /* IE10+/Edge */
-            /* user-select: none; */
-            /* Standard */
-            /* touch-action: pan-y; */
-        }
-
-        .headline {
-            text-align: center;
-            font-size: 5vmin;
-        }
-
-        .bracket {
-            display: flex;
-        }
-
-        .column {
-            display: flex;
-            flex-direction: column;
-            justify-content: space-around;
-            margin-left: calc(1/10*var(--selectorWidth));
-        }
-
-        .selector {
-            display: block;
-            width: var(--selectorWidth);
-            margin: calc(1/20*var(--selectorWidth)) 0vw;
-            border: 1px solid black;
-            text-align: left;
-            padding: calc(1/20*var(--selectorWidth));
-            padding-left: calc(2/20*var(--selectorWidth));
-            font-size: calc(0.11*var(--selectorWidth));
-        }
-
-        .radio-button {
-            height: calc(1/10*var(--selectorWidth));
-            width: calc(1/10*var(--selectorWidth));
-        }
-
-        .stacked-chart {
-            height: 50vmin;
-            width: 90vmin;
-            margin: auto;
-        }
-
-        .upcoming-chart {
-            width: 90vmin;
-            height: 50vmin;
-            margin: auto;
-        }
-
-        .hidden {
-            display: none;
-        }
-    </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
@@ -90,9 +24,9 @@
         <!-- Stacked Chart-->
         <div id="stacked-chart-div">
             <div>
-                Current Probability of
+                Current probability of
                 <select name="stacked-chart-div-selector" id="stacked-chart-div-selector"></select>
-                Getting Each Place
+                getting each place
             </div>
             <div class="stacked-chart">
                 <canvas id="stacked-chart"></canvas>
@@ -102,7 +36,7 @@
         <!-- Upcoming Game area-->
         <div id="upcoming-game-div">
             <div>
-                Change in Probability for
+                Change in average place for
                 <select name="upcoming-game-div-selector" id="upcoming-game-div-selector"></select>
                 Getting
                 <select name="upcoming-game-div-selector-place" id="upcoming-game-div-selector-place"></select>
