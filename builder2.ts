@@ -470,7 +470,7 @@ class StackedChart2 extends MyChart2 {
             },
             options: {
                 plugins: {
-                    legend: { position: "right", reverse: true },
+                    legend: { position: "top", reverse: true },
                 },
                 responsive: true,
                 scales: {
@@ -521,7 +521,7 @@ class ScoreHistorgramChart extends MyChart2 {
                 responsive: true,
                 plugins: {
                     legend: {
-                        position: 'top',
+                        position: 'top', reverse: true
                     },
                 }
             },
@@ -565,7 +565,7 @@ class GameChart extends MyChart2 {
             options: {
                 indexAxis: "y",
                 plugins: {
-                    legend: { position: "top", reverse: false },
+                    legend: { position: "top", reverse: true },
                 },
                 responsive: true,
                 maintainAspectRatio: false,

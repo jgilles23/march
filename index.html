@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8" />
     <title>Bracket Analysis</title>
-    <!-- <link rel="icon" type="image/x-icon" href="./icons/favicon.ico"> -->
+    <!-- <link rel="icon" type="image/x-icon" href="./favicon.ico"> -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link rel="stylesheet" href="styles.css">
 </head>
@@ -12,12 +12,11 @@
 <body>
     <div class="main">
         <div class="headline">March Madness Bracket Analysis</div>
-        <br>
         <!-- Data date selection-->
         <div id="data-date">
-            View data for
+            Data for
             <select name="user-selector" id="user-selector"></select>
-             | Prediction data date
+            as of
             <select name="data-date-selector" id="data-date-selector"></select>
         </div>
         <br>
@@ -34,7 +33,7 @@
         <!-- Histogram of Scores Chart-->
         <div id="scores-histogram-chart-div">
             <div>
-                Probability of getting score (higher better)
+                Probability of getting each score (higher better)
             </div>
             <div class="stacked-chart">
                 <canvas id="scores-histogram-chart"></canvas>
