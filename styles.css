@@ -1,5 +1,4 @@
 * {
-    --selectorWidth: 12vmin;
     /* font-family: 'Courier New', monospace; */
     font-family: 'Arial';
     padding: 0;
@@ -20,7 +19,7 @@
     position: sticky;
     top:0;
     width: 100%;
-    background-color: lightgrey;
+    background-color: red;
 }
 
 .headline {
