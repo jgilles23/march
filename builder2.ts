@@ -805,7 +805,7 @@ async function main2() {
         gameChart.updateScenario(newScenario)
         //Create filtered scenarios to the new Data Date
         let newScenarios: Map<string, Scenario2> = new Map()
-
+        
         scoreChart.updateScenario(newScenario)
         placeChart.updateScenario(newScenario)
     }
