@@ -1,0 +1,27 @@
+{
+  "name": "march",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jgilles23/march.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jgilles23/march/issues"
+  },
+  "homepage": "https://github.com/jgilles23/march#readme",
+  "devDependencies": {
+    "@types/node": "^18.15.2",
+    "typescript": "^4.9.5"
+  },
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.12"
+  }
+}
