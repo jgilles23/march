@@ -5,24 +5,31 @@
     <meta charset="utf-8" />
     <title>Bracket Analysis</title>
     <!-- <link rel="icon" type="image/x-icon" href="./favicon.ico"> -->
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
     <div class="main">
-        <div class="headline">March Madness Bracket Analysis</div>
-        <!-- Data date selection-->
-        <div id="data-date">
-            Data for
-            <select name="user-selector" id="user-selector"></select>
-            as of
-            <select name="data-date-selector" id="data-date-selector"></select>
+        <div class="topbar">
+            <div class="headline">March Madness Bracket Analysis</div>
+            <!-- Data date selection-->
+            <div id="data-date">
+                Data for
+                <select name="user-selector" id="user-selector"></select>
+                as of
+                <select name="data-date-selector" id="data-date-selector"></select>
+            </div>
+            <button onClick="document.getElementById('stacked-chart-div').scrollIntoView();">Place Histogram</button>
+            <button onClick="document.getElementById('scores-histogram-chart-div').scrollIntoView();">Score Histogram</button>
+            <button onClick="document.getElementById('score-chart-div').scrollIntoView();">Score Timeline</button>
+            <button onClick="document.getElementById('place-chart-div').scrollIntoView();">Place Timeline</button>
+            <button onClick="document.getElementById('upcoming-game-div').scrollIntoView();">Upcoming Games</button>
         </div>
         <br>
-        <br>
         <!-- Stacked Chart-->
-        <div id="stacked-chart-div">
+        <div id="stacked-chart-div" class = "chart-div">
             <div>
                 Probability of getting each place (lower better)
             </div>
@@ -31,7 +38,7 @@
             </div>
         </div>
         <!-- Histogram of Scores Chart-->
-        <div id="scores-histogram-chart-div">
+        <div id="scores-histogram-chart-div" class = "chart-div">
             <div>
                 Probability of getting each score (higher better)
             </div>
@@ -40,7 +47,7 @@
             </div>
         </div>
         <!-- Average Score Ovver Time Chart-->
-        <div id="score-chart-div">
+        <div id="score-chart-div" class = "chart-div">
             <div>
                 Predicted final score over time (higher better)
             </div>
@@ -50,7 +57,7 @@
         </div>
         <br>
         <!-- Average Place Ovver Time Chart-->
-        <div id="place-chart-div">
+        <div id="place-chart-div" class = "chart-div">
             <div>
                 Predicted final place over time (lower better)
             </div>
@@ -60,7 +67,7 @@
         </div>
         <br>
         <!-- Upcoming Game area-->
-        <div id="upcoming-game-div">
+        <div id="upcoming-game-div" class = "chart-div">
             <div>
                 Change in average place after each upcoming game (lower better)
             </div>
@@ -70,7 +77,7 @@
         </div>
         <br>
         <br>
-        <div style="text-align: center; font-size: 2vmin">v0.8</div>
+        <div style="text-align: center; font-size: 2vmin">v0.9</div>
 
         <!-- Scripts -->
         <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.1/chart.js"></script>

@@ -16,36 +16,24 @@
     /* touch-action: pan-y; */
 }
 
+.topbar {
+    position: sticky;
+    top:0;
+    width: 100%;
+    background-color: lightgrey;
+}
+
 .headline {
     text-align: center;
     font-size: 5vmin;
 }
 
-.bracket {
-    display: flex;
+.nav-button {
+
 }
 
-.column {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-around;
-    margin-left: calc(1/10*var(--selectorWidth));
-}
-
-.selector {
-    display: block;
-    width: var(--selectorWidth);
-    margin: calc(1/20*var(--selectorWidth)) 0vw;
-    border: 1px solid black;
-    text-align: left;
-    padding: calc(1/20*var(--selectorWidth));
-    padding-left: calc(2/20*var(--selectorWidth));
-    font-size: calc(0.11*var(--selectorWidth));
-}
-
-.radio-button {
-    height: calc(1/10*var(--selectorWidth));
-    width: calc(1/10*var(--selectorWidth));
+.chart-div {
+    scroll-margin-top: 100px;
 }
 
 .stacked-chart {
