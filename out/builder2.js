@@ -771,6 +771,7 @@ async function main2() {
     //Load the primary csv File and convert to states
     let text = await load_file_text2("https://jgilles23.github.io/march/fivethirtyeight_ncaa_forecasts.csv"); //Testing
     // let text: string = await load_file_text2("https://projects.fivethirtyeight.com/march-madness-api/2022/fivethirtyeight_ncaa_forecasts.csv") //Production
+    // let text: string = await load_file_text2("https://projects.fivethirtyeight.com/march-madness-api/2023/fivethirtyeight_ncaa_forecasts.csv") //2023 Production
     let csv = csvToArray3(text);
     let probabilitiesByDate = parse538csv(csv);
     // load user bracket selections

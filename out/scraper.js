@@ -1,7 +1,8 @@
 // ESPN Scraper
 const cheerio = require('cheerio');
 const fs = require('fs');
-const brackets = {
+// 2022 Brackets
+const brackets2022 = {
     "Neel": "https://fantasy.espn.com/tournament-challenge-bracket/2022/en/entry?entryID=68360536",
     "Jordan": "https://fantasy.espn.com/tournament-challenge-bracket/2022/en/entry?entryID=67990401",
     "Joe": "https://fantasy.espn.com/tournament-challenge-bracket/2022/en/entry?entryID=56268892",
@@ -11,6 +12,14 @@ const brackets = {
     "Tara": "https://fantasy.espn.com/tournament-challenge-bracket/2022/en/entry?entryID=68348197",
     "Tyler": "https://fantasy.espn.com/tournament-challenge-bracket/2022/en/entry?entryID=63497066",
 };
+// 2023 Brackets
+const brackets2023 = {
+    "Joe": "https://fantasy.espn.com/tournament-challenge-bracket/2023/en/entry?entryID=83473616",
+    "Jordan": "https://fantasy.espn.com/tournament-challenge-bracket/2023/en/entry?entryID=75615257",
+    "Michele": "https://fantasy.espn.com/tournament-challenge-bracket/2023/en/entry?entryID=79357560",
+};
+// SELECT BRACKET TO USE
+const brackets = brackets2022;
 async function main_scraper() {
     let allBrackets = {};
     let teams;
