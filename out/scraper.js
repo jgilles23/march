@@ -2,9 +2,14 @@
 const cheerio = require('cheerio');
 const fs = require('fs');
 const brackets = {
-    "Tyler": "https://fantasy.espn.com/tournament-challenge-bracket/2022/en/entry?entryID=63497066",
-    "Jordan": "https://fantasy.espn.com/tournament-challenge-bracket/2022/en/entry?entryID=67990401",
     "Neel": "https://fantasy.espn.com/tournament-challenge-bracket/2022/en/entry?entryID=68360536",
+    "Jordan": "https://fantasy.espn.com/tournament-challenge-bracket/2022/en/entry?entryID=67990401",
+    "Joe": "https://fantasy.espn.com/tournament-challenge-bracket/2022/en/entry?entryID=56268892",
+    "Michele": "https://fantasy.espn.com/tournament-challenge-bracket/2022/en/entry?entryID=63499021",
+    "Casey": "https://fantasy.espn.com/tournament-challenge-bracket/2022/en/entry?entryID=67362512",
+    "Caroline": "https://fantasy.espn.com/tournament-challenge-bracket/2022/en/entry?entryID=63672277",
+    "Tara": "https://fantasy.espn.com/tournament-challenge-bracket/2022/en/entry?entryID=68348197",
+    "Tyler": "https://fantasy.espn.com/tournament-challenge-bracket/2022/en/entry?entryID=63497066",
 };
 async function main_scraper() {
     let allBrackets = {};

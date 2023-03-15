@@ -11,9 +11,14 @@ interface Team {
 }
 
 const brackets = {
-    "Tyler" : "https://fantasy.espn.com/tournament-challenge-bracket/2022/en/entry?entryID=63497066",
-    "Jordan" : "https://fantasy.espn.com/tournament-challenge-bracket/2022/en/entry?entryID=67990401",
-    "Neel" : "https://fantasy.espn.com/tournament-challenge-bracket/2022/en/entry?entryID=68360536",
+    "Neel": "https://fantasy.espn.com/tournament-challenge-bracket/2022/en/entry?entryID=68360536",
+    "Jordan": "https://fantasy.espn.com/tournament-challenge-bracket/2022/en/entry?entryID=67990401",
+    "Joe": "https://fantasy.espn.com/tournament-challenge-bracket/2022/en/entry?entryID=56268892",
+    "Michele": "https://fantasy.espn.com/tournament-challenge-bracket/2022/en/entry?entryID=63499021",
+    "Casey": "https://fantasy.espn.com/tournament-challenge-bracket/2022/en/entry?entryID=67362512",
+    "Caroline": "https://fantasy.espn.com/tournament-challenge-bracket/2022/en/entry?entryID=63672277",
+    "Tara": "https://fantasy.espn.com/tournament-challenge-bracket/2022/en/entry?entryID=68348197",
+    "Tyler": "https://fantasy.espn.com/tournament-challenge-bracket/2022/en/entry?entryID=63497066",
 }
 
 async function main_scraper() {
@@ -82,7 +87,7 @@ async function scrape_bracket(url: string) {
     // Data pull loop complete return selections and teams
     // console.log(selections)
     // console.log(teams)
-    return {selections: selections, teams:teams}
+    return { selections: selections, teams: teams }
 }
 
 main_scraper();

@@ -3,7 +3,7 @@ const primarySimulations = 10 ** 4
 const secondarySimulations = Math.floor(primarySimulations / 10)
 const seedString = "march madness"
 const height_base = 20
-const height_per_game_single_user = 3
+const height_per_game_single_user = 5
 const height_per_game_multi_user = 5
 const userSelectorID = "user-selector"
 
@@ -708,6 +708,11 @@ class LineTimeChart extends MyChart2 {
         //Update the chart
         this.chart.update()
     }
+    updateScenarios(scenario: Scenario2, scenarios: Map<string, Scenario2>) {
+        //Special update for timelines that need to have all of the scenarios
+        this.scenarios = scenarios
+        this.updateScenario(scenario)
+    }
     calcMetric(date: string, user: string): number {
         throw "calcMetric must be implemented by sub-classes."
     }
@@ -738,6 +743,10 @@ class PlaceOverTimeChart extends LineTimeChart {
 
 
 async function main2() {
+    // CSS HANDELER
+    //Measure height of the header and set the --scroll-offset to that value
+    let headerHeight = document.getElementById("topbar").offsetHeight
+    document.documentElement.style.setProperty("--scroll-offset", headerHeight.toString()+"px")
     //Load the teams data
     let teams: Map<string, Team> = await load_file_json2("https://jgilles23.github.io/march/team_data.json")
     //Load the primary csv File and convert to states
@@ -778,6 +787,8 @@ async function main2() {
         mostRecentDate = date
         break
     }
+    //Add extra data on the most recent date
+    scenarioByDate[mostRecentDate].calculateSimulations(primarySimulations)
     //Create a stacked chart
     let stackedChart = new StackedChart2(scenarioByDate[mostRecentDate], teams)
     //Create GameChart
@@ -800,14 +811,22 @@ async function main2() {
     dataDateSelectorDOM.onchange = x => {
         let dataDate = dataDateSelectorDOM.value
         let newScenario: Scenario2 = scenarioByDate[dataDate]
+        //Calculate more simulations on the newly selected scenario
+        newScenario.calculateSimulations(primarySimulations)
+        //Add the new scenario to each chart
         stackedChart.updateScenario(newScenario)
         scoreHistogramChart.updateScenario(newScenario)
         gameChart.updateScenario(newScenario)
         //Create filtered scenarios to the new Data Date
         let newScenarios: Map<string, Scenario2> = new Map()
-        
-        scoreChart.updateScenario(newScenario)
-        placeChart.updateScenario(newScenario)
+        for (let date in scenarioByDate) {
+            if (date.localeCompare(dataDate) <= 0) {
+                // If data is less than or equal to the data date
+                newScenarios[date] = scenarioByDate[date]
+            }
+        }
+        scoreChart.updateScenarios(newScenario, newScenarios)
+        placeChart.updateScenarios(newScenario, newScenarios)
     }
 }
 

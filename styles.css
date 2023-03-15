@@ -4,6 +4,7 @@
     padding: 0;
     margin: 0;
     text-align: center;
+    scroll-behavior: smooth;
     /* -webkit-user-select: none; */
     /* Safari */
     /* -moz-user-select: none; */
@@ -15,38 +16,78 @@
     /* touch-action: pan-y; */
 }
 
+:root {
+    /* CUSTOM PROPERTIES */
+    --scroll-offset: 5em;
+}
+
 .topbar {
-    position: sticky;
+    position:fixed;
     top:0;
     width: 100%;
-    background-color: red;
+    background-color: lightgrey;
 }
 
 .headline {
     text-align: center;
-    font-size: 5vmin;
+    font-size: 1.5em;
+    margin-bottom: 0.1em;
+    font-weight: bold;
+}
+
+.select-box {
+    border: none;
+    border-radius: 0.2em;
+    background-color: white;
+    color: black;
+}
+
+.navigation-container {
+    padding-top: 0.4em;
+    padding-bottom: 0.4em;
+    display: flex;
+    margin-left: auto;
+    margin-right: auto;
+    justify-content: space-evenly;
+    width: 90vmin;
 }
 
 .nav-button {
+    font-size: 0.7em;
+    user-select: none;
+    padding-left: 0.3em;
+    padding-right: 0.3em;
+    text-decoration: underline;
+}
 
+.top-spacer {
+    height: var(--scroll-offset);
 }
 
 .chart-div {
-    scroll-margin-top: 100px;
+    /* Set the scroll margin using javascript */
+    scroll-margin-top: calc(var(--scroll-offset) + 1em)
 }
 
-.stacked-chart {
-    height: 50vmin;
+.title {
+    font-size: 1em;
+    font-weight: bold;
+}
+
+.subtitle {
+    font-size: 0.7em;
+}
+
+.chart {
+    /* height: 50vmax; */
     width: 90vmin;
     margin: auto;
+    /* border: solid red; */
 }
 
-.upcoming-chart {
-    width: 90vmin;
-    height: 50vmin;
-    margin: auto;
-}
-
-.hidden {
-    display: none;
+.bottom-filler {
+    display: flex;
+    height: calc(100vh - var(--scroll-offset) - 1em);
+    /* border: solid red; */
+    flex-direction: column;
 }

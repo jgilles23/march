@@ -11,74 +11,82 @@
 </head>
 
 <body>
-    <div class="main">
-        <div class="topbar">
-            <div class="headline">March Madness Bracket Analysis</div>
+    <div class="main" id="main">
+        <div class="topbar" id="topbar">
+            <div class="headline">Bracket Analysis</div>
             <!-- Data date selection-->
             <div id="data-date">
-                Data for
-                <select name="user-selector" id="user-selector"></select>
+                <select class="select-box" name="user-selector" id="user-selector"></select>
                 as of
-                <select name="data-date-selector" id="data-date-selector"></select>
+                <select class="select-box" name="data-date-selector" id="data-date-selector"></select>
             </div>
-            <button onClick="document.getElementById('stacked-chart-div').scrollIntoView();">Place Histogram</button>
-            <button onClick="document.getElementById('scores-histogram-chart-div').scrollIntoView();">Score Histogram</button>
-            <button onClick="document.getElementById('score-chart-div').scrollIntoView();">Score Timeline</button>
-            <button onClick="document.getElementById('place-chart-div').scrollIntoView();">Place Timeline</button>
-            <button onClick="document.getElementById('upcoming-game-div').scrollIntoView();">Upcoming Games</button>
+            <!-- Navigation Buttons -->
+            <div class="navigation-container">
+                <div class="nav-button" onClick="document.getElementById('stacked-chart-div').scrollIntoView();">Place
+                    Histogram</div>
+                <div class="nav-button" onClick="document.getElementById('place-chart-div').scrollIntoView();">Place
+                    Timeline</div>
+                <div class="nav-button"
+                    onClick="document.getElementById('scores-histogram-chart-div').scrollIntoView();">Score Histogram
+                </div>
+                <div class="nav-button" onClick="document.getElementById('score-chart-div').scrollIntoView();">Score
+                    Timeline</div>
+                <div class="nav-button" onClick="document.getElementById('upcoming-game-div').scrollIntoView();">
+                    Upcoming Games</div>
+            </div>
         </div>
+        <!-- Top Spacer-->
+        <div class="top-spacer"></div>
         <br>
         <!-- Stacked Chart-->
-        <div id="stacked-chart-div" class = "chart-div">
-            <div>
-                Probability of getting each place (lower better)
-            </div>
-            <div class="stacked-chart">
+        <div id="stacked-chart-div" class="chart-div">
+            <div class="title">Place Histogram</div>
+            <div class="subtitle">Probability of getting each place (lower better)</div>
+            <div class="chart">
                 <canvas id="stacked-chart"></canvas>
-            </div>
-        </div>
-        <!-- Histogram of Scores Chart-->
-        <div id="scores-histogram-chart-div" class = "chart-div">
-            <div>
-                Probability of getting each score (higher better)
-            </div>
-            <div class="stacked-chart">
-                <canvas id="scores-histogram-chart"></canvas>
-            </div>
-        </div>
-        <!-- Average Score Ovver Time Chart-->
-        <div id="score-chart-div" class = "chart-div">
-            <div>
-                Predicted final score over time (higher better)
-            </div>
-            <div class="stacked-chart">
-                <canvas id="score-chart"></canvas>
             </div>
         </div>
         <br>
         <!-- Average Place Ovver Time Chart-->
-        <div id="place-chart-div" class = "chart-div">
-            <div>
-                Predicted final place over time (lower better)
-            </div>
-            <div class="stacked-chart">
+        <div id="place-chart-div" class="chart-div">
+            <div class="title">Place Timeline</div>
+            <div class="subtitle">Predicted final place over time (lower better)</div>
+            <div class="chart">
                 <canvas id="place-chart"></canvas>
             </div>
         </div>
         <br>
-        <!-- Upcoming Game area-->
-        <div id="upcoming-game-div" class = "chart-div">
-            <div>
-                Change in average place after each upcoming game (lower better)
-            </div>
-            <div class="upcoming-chart">
-                <canvas id="upcoming-chart"></canvas>
+        <!-- Histogram of Scores Chart-->
+        <div id="scores-histogram-chart-div" class="chart-div">
+            <div class="title">Score Histogram</div>
+            <div class="subtitle">Probability of getting each score (higher better)</div>
+            <div class="chart">
+                <canvas id="scores-histogram-chart"></canvas>
             </div>
         </div>
         <br>
+        <!-- Average Score Over Time Chart-->
+        <div id="score-chart-div" class="chart-div">
+            <div class="title">Score Timeline</div>
+            <div class="subtitle">Predicted final score over time (higher better)</div>
+            <div class="chart">
+                <canvas id="score-chart"></canvas>
+            </div>
+        </div>
         <br>
-        <div style="text-align: center; font-size: 2vmin">v0.9</div>
+        <div class="bottom-filler"> <!-- Bottom filler -->
+            <!-- Upcoming Game area-->
+            <div id="upcoming-game-div" class="chart-div">
+                <div class="title">Upcoming Games</div>
+                <div class="subtitle">Change in average place after each upcoming game (lower better)</div>
+                <div class="chart">
+                    <canvas id="upcoming-chart"></canvas>
+                </div>
+            </div>
+            <br>
+            <div style="text-align: center; font-size: 0.5em">v0.9 | Created by Jordan Gilles</div>
 
+        </div>
         <!-- Scripts -->
         <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.1/chart.js"></script>
         <script src="./out/builder2.js"></script>
