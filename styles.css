@@ -49,7 +49,7 @@
     margin-left: auto;
     margin-right: auto;
     justify-content: space-evenly;
-    width: 90vmin;
+    width: 100vmin;
 }
 
 .nav-button {
@@ -61,7 +61,7 @@
 }
 
 .legend {
-    width: 90vmin;
+    width: 100vmin;
     margin: auto;
     justify-content: center;
     display: flex;
