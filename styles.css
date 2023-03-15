@@ -25,7 +25,7 @@
     position:fixed;
     top:0;
     width: 100%;
-    background-color: lightgrey;
+    background-color: white;
 }
 
 .headline {
@@ -36,7 +36,7 @@
 }
 
 .select-box {
-    border: none;
+    border: solid black 1px;
     border-radius: 0.2em;
     background-color: white;
     color: black;
@@ -58,6 +58,37 @@
     padding-left: 0.3em;
     padding-right: 0.3em;
     text-decoration: underline;
+}
+
+.legend {
+    width: 90vmin;
+    margin: auto;
+    justify-content: center;
+    display: flex;
+    flex-wrap: wrap;
+    border-top: solid black 2px;
+    border-bottom: solid black 2px;
+    font-family: "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif";
+    font-size: 12px;
+    color: #666;
+    padding-bottom: 0.4em;
+}
+
+.legend-entry {
+    display: flex;
+    margin-left: 0.4em;
+    margin-right: 0.4em;
+    margin-top: 0.4em;
+}
+
+.legend-user-text {
+    margin-left: 0.3em;
+}
+
+.color-box {
+    width: 1em;
+    height: 1em;
+    background-color: red;
 }
 
 .top-spacer {

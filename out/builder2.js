@@ -372,10 +372,19 @@ class Scenario2 {
     }
 }
 class MyChart2 {
-    constructor(div_id, selector_id, scenario, teams) {
+    constructor(div_id, selector_id, scenario, teams, ignoreCanvas) {
         //Class for standard chart setup functions, etc
+        //Added ignore canvas flag so that this Class can also be used for the legend handler without a ton of refactoring
         this.div_DOM = document.getElementById(div_id);
-        this.canvas_DOM = this.div_DOM.getElementsByTagName("canvas")[0];
+        if (this.div_DOM === undefined || this.div_DOM === null) {
+            throw "Could not find specificed div element.";
+        }
+        if (ignoreCanvas === true) {
+            this.canvas_DOM = undefined;
+        }
+        else {
+            this.canvas_DOM = this.div_DOM.getElementsByTagName("canvas")[0];
+        }
         this.scenario = scenario;
         this.teams = teams;
         //Prepare the selector
@@ -442,7 +451,7 @@ class StackedChart2 extends MyChart2 {
             },
             options: {
                 plugins: {
-                    legend: { position: "top", reverse: true },
+                    legend: { display: false },
                 },
                 responsive: true,
                 scales: {
@@ -493,9 +502,7 @@ class ScoreHistorgramChart extends MyChart2 {
             options: {
                 responsive: true,
                 plugins: {
-                    legend: {
-                        position: 'top', reverse: true
-                    },
+                    legend: { display: false },
                 }
             },
         };
@@ -539,7 +546,7 @@ class GameChart extends MyChart2 {
             options: {
                 indexAxis: "y",
                 plugins: {
-                    legend: { position: "top", reverse: true },
+                    legend: { display: false },
                 },
                 responsive: true,
                 maintainAspectRatio: false,
@@ -639,10 +646,7 @@ class LineTimeChart extends MyChart2 {
             options: {
                 responsive: true,
                 plugins: {
-                    legend: {
-                        position: 'top',
-                        reverse: true
-                    },
+                    legend: { display: false },
                 }
             },
         };
@@ -672,7 +676,7 @@ class LineTimeChart extends MyChart2 {
             for (let date of reverseDates) {
                 // Push labels for the first user
                 if (firstUserFlag === true) {
-                    this.config.data.labels.push(date);
+                    this.config.data.labels.push(date.slice(5));
                 }
                 userDataSet.data.push(this.calcMetric(date, user));
             }
@@ -712,11 +716,48 @@ class PlaceOverTimeChart extends LineTimeChart {
         return this.formatUserWithPlace(user);
     }
 }
-async function main2() {
-    // CSS HANDELER
+class LegendHandler extends MyChart2 {
+    constructor(div_id, scenario, teams) {
+        //Create a legend with the correct colors
+        super(div_id, userSelectorID, scenario, teams, true);
+        //canvas_DOM will fail silently. So be careful!
+        this.load();
+    }
+    load() {
+        // Remove all childern
+        while (this.div_DOM.firstChild) {
+            this.div_DOM.removeChild(this.div_DOM.firstChild);
+        }
+        //Add Legend Label
+        let label = document.createElement("div");
+        label.classList.add("legend-entry");
+        label.innerText = `Legend (place | score):`;
+        this.div_DOM.appendChild(label);
+        // Add a child per user
+        let users = this.getUsersFromSelector();
+        for (let user of users) {
+            let entry = document.createElement("div");
+            entry.classList.add("legend-entry");
+            this.div_DOM.appendChild(entry);
+            //Add color box
+            let colorBox = document.createElement("div");
+            colorBox.classList.add("color-box");
+            colorBox.style.backgroundColor = this.get_color(user);
+            entry.appendChild(colorBox);
+            // Add the name of the user
+            let userName = document.createElement("div");
+            userName.classList.add("legend-user-text");
+            userName.innerText = `${user} (${mean(this.scenario.places[user]).toFixed(1)} | ${mean(this.scenario.scores[user]).toFixed(0)})`;
+            entry.appendChild(userName);
+        }
+    }
+}
+function updateTopBarSize() {
     //Measure height of the header and set the --scroll-offset to that value
     let headerHeight = document.getElementById("topbar").offsetHeight;
     document.documentElement.style.setProperty("--scroll-offset", headerHeight.toString() + "px");
+}
+async function main2() {
     //Load the teams data
     let teams = await load_file_json2("https://jgilles23.github.io/march/team_data.json");
     //Load the primary csv File and convert to states
@@ -757,6 +798,8 @@ async function main2() {
         mostRecentDate = date;
         break;
     }
+    //Create the Legend Handler
+    let legendHandler = new LegendHandler("legendArea", scenarioByDate[mostRecentDate], teams);
     //Add extra data on the most recent date
     scenarioByDate[mostRecentDate].calculateSimulations(primarySimulations);
     //Create a stacked chart
@@ -776,6 +819,9 @@ async function main2() {
         scoreChart.load();
         placeChart.load();
         scoreHistogramChart.load();
+        legendHandler.load();
+        //Update the size of the topbar as the charts may have changes
+        updateTopBarSize();
     };
     //Add click to data date selector - Select something other than the most recent data date
     dataDateSelectorDOM.onchange = x => {
@@ -797,7 +843,15 @@ async function main2() {
         }
         scoreChart.updateScenarios(newScenario, newScenarios);
         placeChart.updateScenarios(newScenario, newScenarios);
+        legendHandler.updateScenario(newScenario);
+        //Update the size of the topbar as the charts may have changes
+        updateTopBarSize();
     };
+    // CSS HANDELER
+    updateTopBarSize();
+    addEventListener("resize", () => {
+        updateTopBarSize();
+    });
 }
 main2();
 //# sourceMappingURL=builder2.js.map
