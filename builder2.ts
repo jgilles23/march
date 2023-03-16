@@ -6,6 +6,22 @@ const height_base = 20
 const height_per_game_single_user = 5
 const height_per_game_multi_user = 5
 const userSelectorID = "user-selector"
+const url538 = "https://projects.fivethirtyeight.com/march-madness-api/2023/fivethirtyeight_ncaa_forecasts.csv"
+let baseURL: string
+let productionFlag: boolean
+
+//Check environment & Assign a few variables depending if this is the test or live environment
+if (window.location.href === "http://127.0.0.1:5500/") {
+    //Test environemnt
+    console.log("Test environment")
+    baseURL = "http://127.0.0.1:5500/"
+    productionFlag = false
+} else {
+    //Production environemnt
+    console.log("Production environment")
+    baseURL = "https://jgilles23.github.io/march/"
+    productionFlag = true
+}
 
 //Never changed constants
 const scoreByRound = [0, 10, 20, 40, 80, 160, 320]
@@ -798,15 +814,15 @@ function updateTopBarSize() {
 
 async function main2() {
     //Load the teams data
-    let teams: Map<string, Team> = await load_file_json2("https://jgilles23.github.io/march/team_data.json")
+    let teams: Map<string, Team> = await load_file_json2(baseURL + "team_data.json")
     //Load the primary csv File and convert to states
     // let text: string = await load_file_text2("https://jgilles23.github.io/march/fivethirtyeight_ncaa_forecasts.csv") //Testing
     // let text: string = await load_file_text2("https://projects.fivethirtyeight.com/march-madness-api/2022/fivethirtyeight_ncaa_forecasts.csv") //Production
-    let text: string = await load_file_text2("https://projects.fivethirtyeight.com/march-madness-api/2023/fivethirtyeight_ncaa_forecasts.csv") //2023 Production
+    let text: string = await load_file_text2(url538) //2023 Production
     let csv = csvToArray3(text)
     let probabilitiesByDate = parse538csv(csv)
     // load user bracket selections
-    let backetsByUser: Map<string, Array<number>> = await load_file_json2("https://jgilles23.github.io/march/user_brackets_new.json")
+    let backetsByUser: Map<string, Array<number>> = await load_file_json2(baseURL + "user_brackets_new.json")
     //Add users to the selector
     let userSelectorDOM = document.getElementById(userSelectorID) as HTMLSelectElement
     let option: HTMLOptionElement = document.createElement("option")
@@ -892,6 +908,12 @@ async function main2() {
     addEventListener("resize", () => {
         updateTopBarSize()
     })
+    // Change the look for the test environment
+    if (productionFlag === false) {
+        let headlineDOM = document.getElementById("headline")
+        headlineDOM.textContent = headlineDOM.textContent + " TEST"
+        headlineDOM.style.color = "red"
+    }
 }
 
 main2()
