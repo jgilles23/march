@@ -406,7 +406,7 @@ class MyChart2 {
         const colors8 = ["#DFFF00", "#FFBF00", "#FF7F50", "#DE3163", "#9FE2BF", "#40E0D0", "#6495ED", "#CCCCFF",];
         const colors12 = ["#dfff00", "#febf00", "#fd7f50", "#de2f63", "#a0e3c1", "#40dfcf", "#6495ed", "#cccdff", "#306a3c", "#e456d8", "#75be31", "#6e4ca8"];
         let colors;
-        if (i <= 8) {
+        if (Object.keys(this.scenario.brackets).length <= 8) {
             colors = colors8;
         }
         else {
@@ -416,6 +416,7 @@ class MyChart2 {
             return colors[i];
         }
         else {
+            print();
             return "#000000"; //black
         }
     }
