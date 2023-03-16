@@ -14,12 +14,19 @@ const brackets2022 = {
 };
 // 2023 Brackets
 const brackets2023 = {
+    "Caroline": "https://fantasy.espn.com/tournament-challenge-bracket/2023/en/entry?entryID=89539441",
+    "Casey": "https://fantasy.espn.com/tournament-challenge-bracket/2023/en/entry?entryID=89749708",
     "Joe": "https://fantasy.espn.com/tournament-challenge-bracket/2023/en/entry?entryID=83473616",
     "Jordan": "https://fantasy.espn.com/tournament-challenge-bracket/2023/en/entry?entryID=75615257",
+    "Katrina": "https://fantasy.espn.com/tournament-challenge-bracket/2023/en/entry?entryID=88386599",
     "Michele": "https://fantasy.espn.com/tournament-challenge-bracket/2023/en/entry?entryID=79357560",
+    "Tyler": "https://fantasy.espn.com/tournament-challenge-bracket/2023/en/entry?entryID=90124806",
+    "Kings": "https://fantasy.espn.com/tournament-challenge-bracket/2023/en/entry?entryID=88207067",
+    "Kings Fan": "https://fantasy.espn.com/tournament-challenge-bracket/2023/en/entry?entryID=88403008",
+    "Spencer": "https://fantasy.espn.com/tournament-challenge-bracket/2023/en/entry?entryID=88974752",
 };
 // SELECT BRACKET TO USE
-const brackets = brackets2022;
+const brackets = brackets2023;
 async function main_scraper() {
     let allBrackets = {};
     let teams;
