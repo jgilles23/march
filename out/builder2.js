@@ -2,6 +2,7 @@
 const primarySimulations = 10 ** 4;
 const secondarySimulations = Math.floor(primarySimulations / 10);
 const seedString = "march madness";
+const team_character_length_cutoff = 20; //Number of characters at which team name is abbreviated
 const height_base = 20;
 const height_per_game_single_user = 5;
 const height_per_game_multi_user = 5;
@@ -462,6 +463,10 @@ class MyChart2 {
         let x = getTeamPositionInGame(game, teamID); //Team position in the game
         return `${this.teams[teamID].seed} ${this.teams[teamID].name} (${(this.scenario.probTable[game][x] * 100).toFixed(0)}%)`;
     }
+    formatTeamShort(teamID, game) {
+        let x = getTeamPositionInGame(game, teamID); //Team position in the game
+        return `${this.teams[teamID].seed} ${this.teams[teamID].abbreviation} (${(this.scenario.probTable[game][x] * 100).toFixed(0)}%)`;
+    }
 }
 class StackedChart2 extends MyChart2 {
     constructor(scenario, teams) {
@@ -618,7 +623,14 @@ class GameChart extends MyChart2 {
                     // Establish overall labels for the teams
                     if (firstUserFlag === true) {
                         for (let winner of this.scenario.possibleWinners(game)) {
-                            this.config.data.labels.push(this.formatTeamLong(winner, game));
+                            //Add team names to the upcoming game graph
+                            let longName = this.formatTeamLong(winner, game);
+                            if (longName.length > team_character_length_cutoff) {
+                                this.config.data.labels.push(this.formatTeamShort(winner, game));
+                            }
+                            else {
+                                this.config.data.labels.push(longName);
+                            }
                         }
                     }
                     // Push data to dataset
