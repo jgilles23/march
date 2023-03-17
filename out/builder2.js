@@ -533,6 +533,12 @@ class ScoreHistorgramChart extends MyChart2 {
                 responsive: true,
                 plugins: {
                     legend: { display: false },
+                },
+                scales: {
+                    x: {
+                        type: "linear",
+                        min: 100,
+                    }
                 }
             },
         };
