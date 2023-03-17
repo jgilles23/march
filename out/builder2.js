@@ -7,7 +7,7 @@ const height_base = 20;
 const height_per_game_single_user = 5;
 const height_per_game_multi_user = 5;
 const userSelectorID = "user-selector";
-const url538 = "https://projects.fivethirtyeight.com/march-madness-api/2023/fivethirtyeight_ncaa_forecasts.csv";
+let url538 = "https://projects.fivethirtyeight.com/march-madness-api/2023/fivethirtyeight_ncaa_forecasts.csv";
 let baseURL;
 let productionFlag;
 //Check environment & Assign a few variables depending if this is the test or live environment
@@ -16,6 +16,7 @@ if (window.location.href === "http://127.0.0.1:5500/") {
     console.log("Test environment");
     baseURL = "http://127.0.0.1:5500/";
     productionFlag = false;
+    // url538 = baseURL + "fivethirtyeight_ncaa_forecasts.csv"
 }
 else {
     //Production environemnt
@@ -537,7 +538,7 @@ class ScoreHistorgramChart extends MyChart2 {
                 scales: {
                     x: {
                         type: "linear",
-                        min: 100,
+                        // min: 100,
                     }
                 }
             },
