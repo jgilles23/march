@@ -88,13 +88,42 @@ function chooseItem(probabilityDistribution) {
             return i;
         }
     }
-    //random number is larger than the sum --- shoud be very very rare - and caught by the disableable check above
-    return probabilityDistribution.length - 1;
+    //random number is larger than the sum --- shoud be very very rare -- check the sum of the function
+    let sumCheck = 0;
+    for (let p of probabilityDistribution) {
+        sumCheck += p;
+    }
+    if (sumCheck < 0.99 || sumCheck > 1.01) {
+        throw "Sum for choose item is not close enough to 1.";
+    }
+    // Re-run the selection
+    return chooseItem(probabilityDistribution);
 }
 // DEFINE GAME STRUCTURE
 const divisor = [0, 2, 4, 8, 16, 32, 64];
 const base = [0, 1, 33, 49, 57, 61, 63];
-const gameToRound = [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 6];
+// const gameToRound = [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 6]
+// let gameToRound = [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 6]
+let g2r = [0];
+for (let i = 0; i < 32; i++) {
+    g2r.push(1);
+}
+for (let i = 0; i < 16; i++) {
+    g2r.push(2);
+}
+for (let i = 0; i < 8; i++) {
+    g2r.push(3);
+}
+for (let i = 0; i < 4; i++) {
+    g2r.push(4);
+}
+for (let i = 0; i < 2; i++) {
+    g2r.push(5);
+}
+for (let i = 0; i < 1; i++) {
+    g2r.push(6);
+}
+let gameToRound = g2r;
 function getGame(team, round) {
     // Get tournament game number give team number and round number
     if (team <= 0 || team > 64) {
@@ -172,8 +201,9 @@ async function load_file_text2(filepath) {
     let text = await response.text();
     return text;
 }
-function parse538csv(csv) {
+function parse538csv(csv, teams) {
     // Return array games with associated probablities for each team by date
+    //Providing teams is fopr debug printing
     let probabilitiesByDate = {};
     for (let item of csv) {
         //Exclude womens tournament
@@ -196,8 +226,11 @@ function parse538csv(csv) {
             probabilitiesByDate[item["forecast_date"]] = probabilityArray;
         }
         //Find matching team
-        const regionLookup = { "South": 33, "East": 17, "Midwest": 49, "West": 1 };
+        const regionLookup = { "South": 1, "East": 17, "Midwest": 33, "West": 49 };
         let teamID = Math.floor(item["team_slot"] / 2) % 16 + regionLookup[item["team_region"]];
+        // if (teams !== undefined) {
+        // console.log("538 Database", item["team_slot"], item["team_name"], "TRANSLATED", teamID, teams[teamID].name)
+        // }
         //Assign probailities
         for (let i = 1; i <= 6; i++) {
             let game = getGame(teamID, i);
@@ -206,6 +239,14 @@ function parse538csv(csv) {
     }
     //Return the parsed data
     return probabilitiesByDate;
+}
+function sumList(L) {
+    //Sum an array of numbers
+    let sum = 0;
+    for (let x of L) {
+        sum += x;
+    }
+    return sum;
 }
 //DATA ANALYSIS FUNCTIONS
 function mean(data) {
@@ -289,7 +330,7 @@ class Scenario2 {
             this.generateSimulation();
         }
     }
-    generateSimulation() {
+    generateSimulation(debugFlag) {
         //Add a simulation to the simulations list by iterating through the probability table and creating sub-games
         let simulaiton = new Array(64);
         for (let game = 63; game > 0; game--) {
@@ -522,7 +563,7 @@ class StackedChart2 extends MyChart2 {
 class ScoreHistorgramChart extends MyChart2 {
     constructor(scenario, teams) {
         // Chart for displaying histogram of the player score at the current state
-        // Likely to be overloaded with all players showing
+        // Likely to be overloaded with all players showing 
         // May need to bucket scores when all players are active...
         super("scores-histogram-chart-div", userSelectorID, scenario, teams);
         this.config = {
@@ -801,6 +842,20 @@ function updateTopBarSize() {
     let headerHeight = document.getElementById("topbar").offsetHeight;
     document.documentElement.style.setProperty("--scroll-offset", headerHeight.toString() + "px");
 }
+//SOME DEBUGGING FUNCTIONS
+function printTeamNamesForGameWithList(game, teams, L) {
+    for (let i = 0; i < getNumTeams(game); i++) {
+        let teamNum = getFirstTeam(game) + i;
+        let x;
+        if (L !== undefined) {
+            x = L[i];
+        }
+        else {
+            x = undefined;
+        }
+        console.log(teamNum, teams[teamNum], x);
+    }
+}
 async function main2() {
     //Load the teams data
     let teams = await load_file_json2(baseURL + "team_data.json");
@@ -809,7 +864,7 @@ async function main2() {
     // let text: string = await load_file_text2("https://projects.fivethirtyeight.com/march-madness-api/2022/fivethirtyeight_ncaa_forecasts.csv") //Production
     let text = await load_file_text2(url538); //2023 Production
     let csv = csvToArray3(text);
-    let probabilitiesByDate = parse538csv(csv);
+    let probabilitiesByDate = parse538csv(csv, teams);
     // load user bracket selections
     let backetsByUser = await load_file_json2(baseURL + "user_brackets_new.json");
     //Add users to the selector
