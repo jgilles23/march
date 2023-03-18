@@ -79,6 +79,8 @@
     margin-left: 0.4em;
     margin-right: 0.4em;
     margin-top: 0.4em;
+    user-select: none;
+    position: relative;
 }
 
 .legend-user-text {
@@ -89,6 +91,17 @@
     width: 1em;
     height: 1em;
     background-color: red;
+}
+
+.strikethrough {
+    border-bottom: solid 2px gray;
+    /* background-color: red; */
+    height: calc(50% - 1px);
+    width: 104%;
+    position: absolute;
+    top: 0px;
+    left: -2%;
+    display: none;
 }
 
 .top-spacer {

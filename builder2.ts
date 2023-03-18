@@ -117,12 +117,12 @@ const base = [0, 1, 33, 49, 57, 61, 63]
 // const gameToRound = [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 6]
 // let gameToRound = [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 6]
 let g2r = [0]
-for (let i = 0; i < 32; i++) {g2r.push(1)}
-for (let i = 0; i < 16; i++) {g2r.push(2)}
-for (let i = 0; i < 8; i++) {g2r.push(3)}
-for (let i = 0; i < 4; i++) {g2r.push(4)}
-for (let i = 0; i < 2; i++) {g2r.push(5)}
-for (let i = 0; i < 1; i++) {g2r.push(6)}
+for (let i = 0; i < 32; i++) { g2r.push(1) }
+for (let i = 0; i < 16; i++) { g2r.push(2) }
+for (let i = 0; i < 8; i++) { g2r.push(3) }
+for (let i = 0; i < 4; i++) { g2r.push(4) }
+for (let i = 0; i < 2; i++) { g2r.push(5) }
+for (let i = 0; i < 1; i++) { g2r.push(6) }
 let gameToRound = g2r
 
 function getGame(team: number, round: number) {
@@ -234,7 +234,7 @@ function parse538csv(csv: Array<Object>, teams?: Map<string, Team>) {
         const regionLookup = { "South": 1, "East": 17, "Midwest": 33, "West": 49 }
         let teamID: number = Math.floor(item["team_slot"] / 2) % 16 + regionLookup[item["team_region"]]
         // if (teams !== undefined) {
-            // console.log("538 Database", item["team_slot"], item["team_name"], "TRANSLATED", teamID, teams[teamID].name)
+        // console.log("538 Database", item["team_slot"], item["team_name"], "TRANSLATED", teamID, teams[teamID].name)
         // }
         //Assign probailities
         for (let i = 1; i <= 6; i++) {
@@ -420,7 +420,7 @@ class Scenario2 {
         for (let i = 0; i < this.simulations.length; i++) {
             let winner = this.simulations[i][game]
             splitData[winner].push(data[i])
-            
+
         }
         return splitData
     }
@@ -450,7 +450,8 @@ class MyChart2 {
     config: any
     scenario: Scenario2
     teams: Map<string, Team>
-    constructor(div_id: string, selector_id: string, scenario: Scenario2, teams: Map<string, Team>, ignoreCanvas?: boolean) {
+    legend: LegendHandler
+    constructor(div_id: string, selector_id: string, scenario: Scenario2, teams: Map<string, Team>, legend:LegendHandler|"NONE", ignoreCanvas?: boolean) {
         //Class for standard chart setup functions, etc
         //Added ignore canvas flag so that this Class can also be used for the legend handler without a ton of refactoring
         this.div_DOM = document.getElementById(div_id) as HTMLDivElement
@@ -461,6 +462,12 @@ class MyChart2 {
             this.canvas_DOM = undefined as HTMLCanvasElement
         } else {
             this.canvas_DOM = this.div_DOM.getElementsByTagName("canvas")[0] as HTMLCanvasElement
+        }
+        if (legend !== "NONE") {
+            // Semi dangerous - because legend is not defined for the legend object...
+            this.legend = legend
+            // Add re-load function to the legend
+            this.legend.reloadFunctions.push(() => this.load())
         }
         this.scenario = scenario
         this.teams = teams
@@ -496,16 +503,16 @@ class MyChart2 {
         }
     }
     getUsersFromSelector(): Array<string> {
-        let selectedValue = this.selectorDOM.value
-        let users: Array<string> = []
-        if (selectedValue === "Each Player") {
-            for (let user in this.scenario.brackets) {
-                users.push(user)
-            }
-        } else {
-            users.push(selectedValue)
-        }
-        return users
+        // let selectedValue = this.selectorDOM.value
+        // let users: Array<string> = []
+        // if (selectedValue === "Each Player") {
+        //     for (let user in this.scenario.brackets) {
+        //         users.push(user)
+        //     }
+        // } else {
+        //     users.push(selectedValue)
+        // }
+        return this.legend.activeUsers
     }
     load() {
         throw "Load Must be Implemented by sub-class"
@@ -527,9 +534,9 @@ class MyChart2 {
 }
 
 class StackedChart2 extends MyChart2 {
-    constructor(scenario: Scenario2, teams: Map<string, Team>) {
+    constructor(scenario: Scenario2, teams: Map<string, Team>, legend: LegendHandler) {
         //Create a stacket chart showing each player and their likely finish rank
-        super("stacked-chart-div", userSelectorID, scenario, teams)
+        super("stacked-chart-div", userSelectorID, scenario, teams, legend)
         //Prepare the chart
         this.config = {
             type: 'bar',
@@ -576,11 +583,11 @@ class StackedChart2 extends MyChart2 {
 }
 
 class ScoreHistorgramChart extends MyChart2 {
-    constructor(scenario: Scenario2, teams: Map<string, Team>) {
+    constructor(scenario: Scenario2, teams: Map<string, Team>, legend: LegendHandler) {
         // Chart for displaying histogram of the player score at the current state
         // Likely to be overloaded with all players showing 
         // May need to bucket scores when all players are active...
-        super("scores-histogram-chart-div", userSelectorID, scenario, teams)
+        super("scores-histogram-chart-div", userSelectorID, scenario, teams, legend)
         this.config = {
             type: 'bar',
             data: {
@@ -625,10 +632,10 @@ class ScoreHistorgramChart extends MyChart2 {
 }
 
 class GameChart extends MyChart2 {
-    constructor(scenario: Scenario2, teams: Map<string, Team>) {
+    constructor(scenario: Scenario2, teams: Map<string, Team>, legend: LegendHandler) {
         // Class for gaphing upcoming games with bars for effect on
         // Players average finishing place in the tournament
-        super("upcoming-game-div", userSelectorID, scenario, teams)
+        super("upcoming-game-div", userSelectorID, scenario, teams, legend)
         this.config = {
             type: 'bar',
             data: {
@@ -730,9 +737,9 @@ class GameChart extends MyChart2 {
 
 class LineTimeChart extends MyChart2 {
     scenarios: Map<string, Scenario2>
-    constructor(div_id: string, scenarios: Map<string, Scenario2>, mostRecentScenario: Scenario2, teams: Map<string, Team>) {
+    constructor(div_id: string, scenarios: Map<string, Scenario2>, mostRecentScenario: Scenario2, teams: Map<string, Team>, legend: LegendHandler) {
         //Create a line chart of the average finishing score of the player over time
-        super(div_id, userSelectorID, mostRecentScenario, teams)
+        super(div_id, userSelectorID, mostRecentScenario, teams, legend)
         this.scenarios = scenarios
         //Prepare the chart
         this.config = {
@@ -818,13 +825,27 @@ class PlaceOverTimeChart extends LineTimeChart {
 }
 
 class LegendHandler extends MyChart2 {
+    activeUsers: Array<string>
+    strikethroughDOM: Map<string, HTMLDivElement>
+    reloadFunctions: Array<any> //Array of functions that should be called for each re-load of the legend
     constructor(div_id: string, scenario: Scenario2, teams: Map<string, Team>) {
         //Create a legend with the correct colors
-        super(div_id, userSelectorID, scenario, teams, true)
+        super(div_id, userSelectorID, scenario, teams, "NONE", true)
+        this.reloadFunctions = []
         //canvas_DOM will fail silently. So be careful!
+        this.activeUsers = []
+        this.strikethroughDOM = new Map()
+        this.legend = this
         this.load()
+        console.log(this.activeUsers)
     }
     load() {
+        //Turn on all active users on first load
+        this.activeUsers = []
+        for (let user in this.scenario.brackets) {
+            this.activeUsers.push(user)
+        }
+        this.activeUsers.sort()
         // Remove all childern
         while (this.div_DOM.firstChild) {
             this.div_DOM.removeChild(this.div_DOM.firstChild)
@@ -834,11 +855,22 @@ class LegendHandler extends MyChart2 {
         label.classList.add("legend-entry")
         label.innerText = `Legend (place | score):`
         this.div_DOM.appendChild(label)
+        // Add a select all option
+        let selectAll = document.createElement("div")
+        selectAll.classList.add("legend-entry")
+        selectAll.innerText = "Show All"
+        selectAll.style.textDecoration = "underline"
+        selectAll.onclick = x => {
+            this.toggleAllOn()
+        }
+        this.div_DOM.appendChild(selectAll)
         // Add a child per user
-        let users = this.getUsersFromSelector()
-        for (let user of users) {
+        for (let user of this.activeUsers) {
             let entry = document.createElement("div")
             entry.classList.add("legend-entry")
+            entry.onclick = x => {
+                this.toggle(user)
+            }
             this.div_DOM.appendChild(entry)
             //Add color box
             let colorBox = document.createElement("div")
@@ -850,8 +882,68 @@ class LegendHandler extends MyChart2 {
             userName.classList.add("legend-user-text")
             userName.innerText = `${user} (${mean(this.scenario.places[user]).toFixed(1)} | ${mean(this.scenario.scores[user]).toFixed(0)})`
             entry.appendChild(userName)
+            // Add a strikethrough
+            let strikethrough = document.createElement("div")
+            strikethrough.classList.add("strikethrough")
+            entry.appendChild(strikethrough)
+            this.strikethroughDOM[user] = strikethrough
         }
 
+    }
+    toggle(user: string) {
+        // Toggle the user to be in the active users list - or not be in the active users list
+        //First selection - de-toggle all other users
+        if (this.activeUsers.length === Object.keys(this.scenario.brackets).length) {
+            //Strikethrough all the other users
+            for (let u in this.scenario.brackets) {
+                this.strikethroughDOM[u].style.display = "block"
+            }
+            // Make this user the only active user
+            this.activeUsers = [user]
+            this.activeUsers.sort()
+            this.strikethroughDOM[user].style.display = "none"
+        } else {
+            //Some users are already dis-selected - normal toggling behavior
+            let inList: boolean = false
+            for (let u of this.activeUsers) {
+                if (user === u) {
+                    inList = true
+                    break
+                }
+            }
+            if (inList === true) {
+                //Remove from the list and strikethrough
+                this.strikethroughDOM[user].style.display = "block"
+                this.activeUsers.splice(this.activeUsers.indexOf(user), 1)
+                this.activeUsers.sort()
+            } else {
+                //Add to the list, don't strikethrough
+                this.strikethroughDOM[user].style.display = "none"
+                this.activeUsers.push(user)
+                this.activeUsers.sort()
+            }
+            //If no users are selected, show all users
+            if (this.activeUsers.length === 0) {
+                this.toggleAllOn()
+                return
+            }
+        }
+        console.log(this.activeUsers)
+        this.reload()
+    }
+    toggleAllOn() {
+        this.activeUsers = []
+        for (let u in this.scenario.brackets) {
+            this.strikethroughDOM[u].style.display = "none"
+            this.activeUsers.push(u)
+        }
+        console.log(this.activeUsers)
+        this.reload()
+    }
+    reload() {
+        for (let reloadFunction of this.reloadFunctions) {
+            reloadFunction()
+        }
     }
 }
 
@@ -886,22 +978,10 @@ async function main2() {
     let probabilitiesByDate = parse538csv(csv, teams)
     // load user bracket selections
     let backetsByUser: Map<string, Array<number>> = await load_file_json2(baseURL + "user_brackets_new.json")
-    //Add users to the selector
-    let userSelectorDOM = document.getElementById(userSelectorID) as HTMLSelectElement
-    let option: HTMLOptionElement = document.createElement("option")
-    userSelectorDOM.add(option)
-    option.textContent = "Each Player"
-    option.value = "Each Player"
-    for (let user in backetsByUser) {
-        option = document.createElement("option")
-        userSelectorDOM.add(option)
-        option.textContent = user
-        option.value = user
-    }
     // Add data date to a selector
     let dataDateSelectorDOM = document.getElementById("data-date-selector") as HTMLSelectElement
     for (let date in probabilitiesByDate) {
-        option = document.createElement("option")
+        let option = document.createElement("option")
         dataDateSelectorDOM.add(option)
         option.textContent = date
         option.value = date
@@ -922,26 +1002,15 @@ async function main2() {
     //Add extra data on the most recent date
     scenarioByDate[mostRecentDate].calculateSimulations(primarySimulations)
     //Create a stacked chart
-    let stackedChart = new StackedChart2(scenarioByDate[mostRecentDate], teams)
+    let stackedChart = new StackedChart2(scenarioByDate[mostRecentDate], teams, legendHandler)
     //Create GameChart
-    let gameChart = new GameChart(scenarioByDate[mostRecentDate], teams)
+    let gameChart = new GameChart(scenarioByDate[mostRecentDate], teams, legendHandler)
     //Create Score over time chart
-    let scoreChart = new ScoreChart("score-chart-div", scenarioByDate, scenarioByDate[mostRecentDate], teams)
+    let scoreChart = new ScoreChart("score-chart-div", scenarioByDate, scenarioByDate[mostRecentDate], teams, legendHandler)
     //Create Place over time chart
-    let placeChart = new PlaceOverTimeChart("place-chart-div", scenarioByDate, scenarioByDate[mostRecentDate], teams)
+    let placeChart = new PlaceOverTimeChart("place-chart-div", scenarioByDate, scenarioByDate[mostRecentDate], teams, legendHandler)
     //Create Score Histogram Chart
-    let scoreHistogramChart = new ScoreHistorgramChart(scenarioByDate[mostRecentDate], teams)
-    //Add click action to the main selector - Select all players or only one player
-    userSelectorDOM.onchange = x => {
-        stackedChart.load()
-        gameChart.load()
-        scoreChart.load()
-        placeChart.load()
-        scoreHistogramChart.load()
-        legendHandler.load()
-        //Update the size of the topbar as the charts may have changes
-        updateTopBarSize()
-    }
+    let scoreHistogramChart = new ScoreHistorgramChart(scenarioByDate[mostRecentDate], teams, legendHandler)
     //Add click to data date selector - Select something other than the most recent data date
     dataDateSelectorDOM.onchange = x => {
         let dataDate = dataDateSelectorDOM.value

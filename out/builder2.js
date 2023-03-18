@@ -431,7 +431,7 @@ class Scenario2 {
     }
 }
 class MyChart2 {
-    constructor(div_id, selector_id, scenario, teams, ignoreCanvas) {
+    constructor(div_id, selector_id, scenario, teams, legend, ignoreCanvas) {
         //Class for standard chart setup functions, etc
         //Added ignore canvas flag so that this Class can also be used for the legend handler without a ton of refactoring
         this.div_DOM = document.getElementById(div_id);
@@ -443,6 +443,12 @@ class MyChart2 {
         }
         else {
             this.canvas_DOM = this.div_DOM.getElementsByTagName("canvas")[0];
+        }
+        if (legend !== "NONE") {
+            // Semi dangerous - because legend is not defined for the legend object...
+            this.legend = legend;
+            // Add re-load function to the legend
+            this.legend.reloadFunctions.push(() => this.load());
         }
         this.scenario = scenario;
         this.teams = teams;
@@ -480,17 +486,16 @@ class MyChart2 {
         }
     }
     getUsersFromSelector() {
-        let selectedValue = this.selectorDOM.value;
-        let users = [];
-        if (selectedValue === "Each Player") {
-            for (let user in this.scenario.brackets) {
-                users.push(user);
-            }
-        }
-        else {
-            users.push(selectedValue);
-        }
-        return users;
+        // let selectedValue = this.selectorDOM.value
+        // let users: Array<string> = []
+        // if (selectedValue === "Each Player") {
+        //     for (let user in this.scenario.brackets) {
+        //         users.push(user)
+        //     }
+        // } else {
+        //     users.push(selectedValue)
+        // }
+        return this.legend.activeUsers;
     }
     load() {
         throw "Load Must be Implemented by sub-class";
@@ -511,9 +516,9 @@ class MyChart2 {
     }
 }
 class StackedChart2 extends MyChart2 {
-    constructor(scenario, teams) {
+    constructor(scenario, teams, legend) {
         //Create a stacket chart showing each player and their likely finish rank
-        super("stacked-chart-div", userSelectorID, scenario, teams);
+        super("stacked-chart-div", userSelectorID, scenario, teams, legend);
         //Prepare the chart
         this.config = {
             type: 'bar',
@@ -561,11 +566,11 @@ class StackedChart2 extends MyChart2 {
     }
 }
 class ScoreHistorgramChart extends MyChart2 {
-    constructor(scenario, teams) {
+    constructor(scenario, teams, legend) {
         // Chart for displaying histogram of the player score at the current state
         // Likely to be overloaded with all players showing 
         // May need to bucket scores when all players are active...
-        super("scores-histogram-chart-div", userSelectorID, scenario, teams);
+        super("scores-histogram-chart-div", userSelectorID, scenario, teams, legend);
         this.config = {
             type: 'bar',
             data: {
@@ -611,10 +616,10 @@ class ScoreHistorgramChart extends MyChart2 {
     }
 }
 class GameChart extends MyChart2 {
-    constructor(scenario, teams) {
+    constructor(scenario, teams, legend) {
         // Class for gaphing upcoming games with bars for effect on
         // Players average finishing place in the tournament
-        super("upcoming-game-div", userSelectorID, scenario, teams);
+        super("upcoming-game-div", userSelectorID, scenario, teams, legend);
         this.config = {
             type: 'bar',
             data: {
@@ -717,9 +722,9 @@ class GameChart extends MyChart2 {
     }
 }
 class LineTimeChart extends MyChart2 {
-    constructor(div_id, scenarios, mostRecentScenario, teams) {
+    constructor(div_id, scenarios, mostRecentScenario, teams, legend) {
         //Create a line chart of the average finishing score of the player over time
-        super(div_id, userSelectorID, mostRecentScenario, teams);
+        super(div_id, userSelectorID, mostRecentScenario, teams, legend);
         this.scenarios = scenarios;
         //Prepare the chart
         this.config = {
@@ -804,11 +809,22 @@ class PlaceOverTimeChart extends LineTimeChart {
 class LegendHandler extends MyChart2 {
     constructor(div_id, scenario, teams) {
         //Create a legend with the correct colors
-        super(div_id, userSelectorID, scenario, teams, true);
+        super(div_id, userSelectorID, scenario, teams, "NONE", true);
+        this.reloadFunctions = [];
         //canvas_DOM will fail silently. So be careful!
+        this.activeUsers = [];
+        this.strikethroughDOM = new Map();
+        this.legend = this;
         this.load();
+        console.log(this.activeUsers);
     }
     load() {
+        //Turn on all active users on first load
+        this.activeUsers = [];
+        for (let user in this.scenario.brackets) {
+            this.activeUsers.push(user);
+        }
+        this.activeUsers.sort();
         // Remove all childern
         while (this.div_DOM.firstChild) {
             this.div_DOM.removeChild(this.div_DOM.firstChild);
@@ -818,11 +834,22 @@ class LegendHandler extends MyChart2 {
         label.classList.add("legend-entry");
         label.innerText = `Legend (place | score):`;
         this.div_DOM.appendChild(label);
+        // Add a select all option
+        let selectAll = document.createElement("div");
+        selectAll.classList.add("legend-entry");
+        selectAll.innerText = "Show All";
+        selectAll.style.textDecoration = "underline";
+        selectAll.onclick = x => {
+            this.toggleAllOn();
+        };
+        this.div_DOM.appendChild(selectAll);
         // Add a child per user
-        let users = this.getUsersFromSelector();
-        for (let user of users) {
+        for (let user of this.activeUsers) {
             let entry = document.createElement("div");
             entry.classList.add("legend-entry");
+            entry.onclick = x => {
+                this.toggle(user);
+            };
             this.div_DOM.appendChild(entry);
             //Add color box
             let colorBox = document.createElement("div");
@@ -834,6 +861,68 @@ class LegendHandler extends MyChart2 {
             userName.classList.add("legend-user-text");
             userName.innerText = `${user} (${mean(this.scenario.places[user]).toFixed(1)} | ${mean(this.scenario.scores[user]).toFixed(0)})`;
             entry.appendChild(userName);
+            // Add a strikethrough
+            let strikethrough = document.createElement("div");
+            strikethrough.classList.add("strikethrough");
+            entry.appendChild(strikethrough);
+            this.strikethroughDOM[user] = strikethrough;
+        }
+    }
+    toggle(user) {
+        // Toggle the user to be in the active users list - or not be in the active users list
+        //First selection - de-toggle all other users
+        if (this.activeUsers.length === Object.keys(this.scenario.brackets).length) {
+            //Strikethrough all the other users
+            for (let u in this.scenario.brackets) {
+                this.strikethroughDOM[u].style.display = "block";
+            }
+            // Make this user the only active user
+            this.activeUsers = [user];
+            this.activeUsers.sort();
+            this.strikethroughDOM[user].style.display = "none";
+        }
+        else {
+            //Some users are already dis-selected - normal toggling behavior
+            let inList = false;
+            for (let u of this.activeUsers) {
+                if (user === u) {
+                    inList = true;
+                    break;
+                }
+            }
+            if (inList === true) {
+                //Remove from the list and strikethrough
+                this.strikethroughDOM[user].style.display = "block";
+                this.activeUsers.splice(this.activeUsers.indexOf(user), 1);
+                this.activeUsers.sort();
+            }
+            else {
+                //Add to the list, don't strikethrough
+                this.strikethroughDOM[user].style.display = "none";
+                this.activeUsers.push(user);
+                this.activeUsers.sort();
+            }
+            //If no users are selected, show all users
+            if (this.activeUsers.length === 0) {
+                this.toggleAllOn();
+                return;
+            }
+        }
+        console.log(this.activeUsers);
+        this.reload();
+    }
+    toggleAllOn() {
+        this.activeUsers = [];
+        for (let u in this.scenario.brackets) {
+            this.strikethroughDOM[u].style.display = "none";
+            this.activeUsers.push(u);
+        }
+        console.log(this.activeUsers);
+        this.reload();
+    }
+    reload() {
+        for (let reloadFunction of this.reloadFunctions) {
+            reloadFunction();
         }
     }
 }
@@ -867,22 +956,10 @@ async function main2() {
     let probabilitiesByDate = parse538csv(csv, teams);
     // load user bracket selections
     let backetsByUser = await load_file_json2(baseURL + "user_brackets_new.json");
-    //Add users to the selector
-    let userSelectorDOM = document.getElementById(userSelectorID);
-    let option = document.createElement("option");
-    userSelectorDOM.add(option);
-    option.textContent = "Each Player";
-    option.value = "Each Player";
-    for (let user in backetsByUser) {
-        option = document.createElement("option");
-        userSelectorDOM.add(option);
-        option.textContent = user;
-        option.value = user;
-    }
     // Add data date to a selector
     let dataDateSelectorDOM = document.getElementById("data-date-selector");
     for (let date in probabilitiesByDate) {
-        option = document.createElement("option");
+        let option = document.createElement("option");
         dataDateSelectorDOM.add(option);
         option.textContent = date;
         option.value = date;
@@ -903,26 +980,15 @@ async function main2() {
     //Add extra data on the most recent date
     scenarioByDate[mostRecentDate].calculateSimulations(primarySimulations);
     //Create a stacked chart
-    let stackedChart = new StackedChart2(scenarioByDate[mostRecentDate], teams);
+    let stackedChart = new StackedChart2(scenarioByDate[mostRecentDate], teams, legendHandler);
     //Create GameChart
-    let gameChart = new GameChart(scenarioByDate[mostRecentDate], teams);
+    let gameChart = new GameChart(scenarioByDate[mostRecentDate], teams, legendHandler);
     //Create Score over time chart
-    let scoreChart = new ScoreChart("score-chart-div", scenarioByDate, scenarioByDate[mostRecentDate], teams);
+    let scoreChart = new ScoreChart("score-chart-div", scenarioByDate, scenarioByDate[mostRecentDate], teams, legendHandler);
     //Create Place over time chart
-    let placeChart = new PlaceOverTimeChart("place-chart-div", scenarioByDate, scenarioByDate[mostRecentDate], teams);
+    let placeChart = new PlaceOverTimeChart("place-chart-div", scenarioByDate, scenarioByDate[mostRecentDate], teams, legendHandler);
     //Create Score Histogram Chart
-    let scoreHistogramChart = new ScoreHistorgramChart(scenarioByDate[mostRecentDate], teams);
-    //Add click action to the main selector - Select all players or only one player
-    userSelectorDOM.onchange = x => {
-        stackedChart.load();
-        gameChart.load();
-        scoreChart.load();
-        placeChart.load();
-        scoreHistogramChart.load();
-        legendHandler.load();
-        //Update the size of the topbar as the charts may have changes
-        updateTopBarSize();
-    };
+    let scoreHistogramChart = new ScoreHistorgramChart(scenarioByDate[mostRecentDate], teams, legendHandler);
     //Add click to data date selector - Select something other than the most recent data date
     dataDateSelectorDOM.onchange = x => {
         let dataDate = dataDateSelectorDOM.value;

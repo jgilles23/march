@@ -14,14 +14,8 @@
     <div class="main" id="main">
         <div class="topbar" id="topbar">
             <div class="headline" id="headline">Bracket Analytics</div>
-            <!-- Data date selection-->
-            <div id="data-date">
-                <select class="select-box" name="user-selector" id="user-selector"></select>
-                as of
-                <select class="select-box" name="data-date-selector" id="data-date-selector"></select>
-            </div>
             <!-- Navigation Buttons -->
-            <div class="navigation-container">
+            <!-- <div class="navigation-container">
                 <div class="nav-button" onClick="document.getElementById('stacked-chart-div').scrollIntoView();">Place
                     Histogram</div>
                 <div class="nav-button" onClick="document.getElementById('place-chart-div').scrollIntoView();">Place
@@ -33,13 +27,21 @@
                     Timeline</div>
                 <div class="nav-button" onClick="document.getElementById('upcoming-game-div').scrollIntoView();">
                     Upcoming Games</div>
-            </div>
-            <div class="legend" id="legendArea">
-
-            </div>
+            </div> -->
+            <!-- LEGEND -->
+            <div class="legend" id="legendArea"></div>
         </div>
         <!-- Top Spacer-->
         <div class="top-spacer"></div>
+        <!-- Legend Explainer -->
+        <div class="subtitle">
+            Click on a name in the legend to highlight/toggle player in the graphs.<br><br>
+        </div>
+        <!-- Data date selection-->
+        <div id="data-date" class="subtitle">
+            Data as of
+            <select class="select-box" name="data-date-selector" id="data-date-selector"></select>
+        </div>
         <br>
         <!-- Stacked Chart-->
         <div id="stacked-chart-div" class="chart-div">
@@ -87,7 +89,7 @@
                 </div>
             </div>
             <br>
-            <div style="text-align: center; font-size: 0.5em">v1.5 | Created by Jordan Gilles</div>
+            <div style="text-align: center; font-size: 0.5em">v1.6 | Created by Jordan Gilles</div>
 
         </div>
         <!-- Scripts -->
