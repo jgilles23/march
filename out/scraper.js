@@ -21,8 +21,8 @@ const brackets2023 = {
     "Katrina": "https://fantasy.espn.com/tournament-challenge-bracket/2023/en/entry?entryID=88386599",
     "Michele": "https://fantasy.espn.com/tournament-challenge-bracket/2023/en/entry?entryID=79357560",
     "Tyler": "https://fantasy.espn.com/tournament-challenge-bracket/2023/en/entry?entryID=90124806",
-    "Kings": "https://fantasy.espn.com/tournament-challenge-bracket/2023/en/entry?entryID=88207067",
-    "Kings Fan": "https://fantasy.espn.com/tournament-challenge-bracket/2023/en/entry?entryID=88403008",
+    "Neel": "https://fantasy.espn.com/tournament-challenge-bracket/2023/en/entry?entryID=88207067",
+    "Barb": "https://fantasy.espn.com/tournament-challenge-bracket/2023/en/entry?entryID=88403008",
     "Spencer": "https://fantasy.espn.com/tournament-challenge-bracket/2023/en/entry?entryID=88974752",
 };
 // SELECT BRACKET TO USE
